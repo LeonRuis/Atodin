@@ -171,7 +171,9 @@ get_ground_intersection :: proc(ray: rl.Ray) -> vec3 {
 update_pointer :: proc() {
 	ray := get_ray_from_screen()
 	pointer:= get_ground_intersection(ray)
-	pointer_pos = {int(pointer.x), 0, int(pointer.z)}
+
+	height := terrain[{int(pointer.x), int(pointer.z)}].floor_height
+	pointer_pos = {int(pointer.x), int(height), int(pointer.z)}
 }
 ////
 

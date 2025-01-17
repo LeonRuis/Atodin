@@ -10,12 +10,10 @@ Tile :: enum {
 }
 
 CHUNK_SIZE :: vec3i{20, 10, 20}
+seed: i64 = 4 
+scale: f64 = 0.1
 
 generate_world_terrain :: proc() {
-	seed: i64 = 15
-	scale: f64 = 0.1
-	index: int = 0 
-
 	for x in 0..<CHUNK_SIZE.x {
 		for y in 0..<CHUNK_SIZE.y {
 			for z in 0..<CHUNK_SIZE.z {
@@ -27,30 +25,29 @@ generate_world_terrain :: proc() {
 				cell_to_draw: bool = (y == max_y) 
 
 				this_terrain_cell: terrain_cell = {
-					this_pos,
 					grass_tile,
-					cell_to_draw
+					y
 				}
 
-				terrain[index] = this_terrain_cell
-				index += 1
+				if cell_to_draw {
+					terrain[{x, z}] = this_terrain_cell
+				}
 			}
 		}
 	}
+
+	fmt.println(len(terrain))
 }
 
-terrain: [20 * 20 * 10]terrain_cell
+terrain: map[vec2i]terrain_cell
 
 terrain_cell :: struct {
-	pos: vec3i,
 	tile: rl.Model,
-	to_draw: bool
+	floor_height: int
 }
 
 draw_world_terrain :: proc() {
-	for &cell in terrain {
-		if cell.to_draw {
-			rl.DrawModel(cell.tile, {f32(cell.pos.x), f32(cell.pos.y), f32(cell.pos.z)}, 1.0, rl.WHITE)
+	for key_pos, &cell in terrain {
+			rl.DrawModel(cell.tile, {f32(key_pos.x), f32(cell.floor_height), f32(key_pos.y)}, 1.0, rl.WHITE)
 		}
-	}
 }
