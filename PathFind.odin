@@ -77,11 +77,13 @@ connect_cell :: proc(A, B: vec3i, bidirectional: bool) {
 }
 
 disconnect_cells :: proc(A, B: vec3i) {
-	a: ^cell = &world[A]
-	b: ^cell = &world[B]
+	if A in world && B in world {
+		a: ^cell = &world[A]
+		b: ^cell = &world[B]
 
-	delete_key(&a.cells_conected, b.position)
-	delete_key(&b.cells_conected, a.position)
+		delete_key(&a.cells_conected, b.position)
+		delete_key(&b.cells_conected, a.position)
+	}
 }
 
 disable_cell :: proc(cell_pos: vec3i) {

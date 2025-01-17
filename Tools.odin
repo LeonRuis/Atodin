@@ -1,5 +1,7 @@
 package Atalay
 
+import rand "core:math/rand"
+
 vec2i :: [2]int
 vec3i :: [3]int
 
@@ -10,6 +12,12 @@ to_v3 :: proc(a: vec3i) -> vec3{
 	return {f32(a.x), f32(a.y), f32(a.z)}
 }
 
+ran_v3i :: proc() -> vec3i {
+	x := rand.int31_max(world_size)
+	y := rand.int31_max(world_size)
+
+	return {int(x), 0, int(y)}
+ }
 ////----------------------------------------------
 
 N :: vec3i{0, 0, -1}

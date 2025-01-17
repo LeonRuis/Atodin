@@ -25,8 +25,6 @@ cube_pos: vec3i = {0, 0, 0}
 cube_target: vec3i = {0, 0, 2}
 cube_path: [dynamic]vec3i
 
-disabled_cell: vec3i = {3, 0, 0}
-
 pointer_pos: vec3i
 
 GameMode :: enum {
@@ -69,17 +67,13 @@ main :: proc() {
 
 	rl.SetTargetFPS(60)
 
-	disable_cell(disabled_cell)
 	tick: int = 0
 
 	for !rl.WindowShouldClose() {
-
-
 		tick += 1
-		if tick >= 50 && len(cube_path) > 0 {
+		if tick >= 50 {
 			tick = 0
-			cube_pos = cube_path[0]
-			ordered_remove(&cube_path, 0)
+			wonder_entity(&rat_test)
 		}		
 
 		if gamemode != .GUI {
@@ -107,7 +101,9 @@ main :: proc() {
 			rl.ClearBackground(rl.GRAY)
 
 			rl.BeginMode3D(camera3)
-
+				//##
+				draw_rat()
+				//##
 				// Draw Mouse Pointer
 				update_pointer()
 				if gamemode == .POINTER {
@@ -118,11 +114,7 @@ main :: proc() {
 				for x in 0..< world_size {
 					for z in 0..< world_size {
 						this_pos: vec3i = {x, 0, z}
-						if this_pos == disabled_cell {
-							rl.DrawModel(sand_tile, {f32(x), 0, f32(z)}, 1.0, rl.WHITE)
-						} else {
-							rl.DrawModel(grass_tile, {f32(x), 0, f32(z)}, 1.0, rl.WHITE)
-						}
+						rl.DrawModel(grass_tile, {f32(x), 0, f32(z)}, 1.0, rl.WHITE)
 					}
 				} 
 
@@ -235,7 +227,6 @@ update_wall :: proc() {
 
 		cell := &world[pointer_pos]
 		cell.walls[wall_rotation] = new_wall
-
 
 		disconnect_cells(pointer_pos, cell_to_disconnect)
 	}
