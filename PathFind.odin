@@ -11,7 +11,8 @@ cell :: struct {
 	walkable: bool,
 	cells_conected: map[vec3i]bool,
 	position: vec3i,
-	walls: [4]Wall
+	walls: [4]Wall,
+	tile: Tile
 }
 
 node :: struct {
@@ -40,7 +41,8 @@ init_world_path :: proc() {
 					true,
 					{},
 					pos,
-					{}
+					{},
+					.GRASS // Default, should be controlled by temp, moist, etc
 				}
 			}
 		}

@@ -68,6 +68,7 @@ main :: proc() {
 	rl.SetTargetFPS(60)
 
 	tick: int = 0
+	generate_world_terrain()
 
 	for !rl.WindowShouldClose() {
 		tick += 1
@@ -111,12 +112,14 @@ main :: proc() {
 				}
 
 				// Draw simple map Tiles
-				for x in 0..< world_size {
-					for z in 0..< world_size {
-						this_pos: vec3i = {x, 0, z}
-						rl.DrawModel(grass_tile, {f32(x), 0, f32(z)}, 1.0, rl.WHITE)
-					}
-				} 
+				// for x in 0..< world_size {
+				// 	for z in 0..< world_size {
+				// 		this_pos: vec3i = {x, 0, z}
+				// 		rl.DrawModel(grass_tile, {f32(x), 0, f32(z)}, 1.0, rl.WHITE)
+				// 	}
+				// } 
+
+				draw_world_terrain()
 
 				// Draw Walls
 				for key_pos, &cell in world {
