@@ -25,8 +25,6 @@ cube_pos: vec3i = {0, 0, 0}
 cube_target: vec3i = {0, 0, 2}
 cube_path: [dynamic]vec3i
 
-disabled_cell: vec3i = {3, 0, 0}
-
 pointer_pos: vec3i
 
 GameMode :: enum {
@@ -69,11 +67,10 @@ main :: proc() {
 
 	rl.SetTargetFPS(60)
 
-	disable_cell(disabled_cell)
 	tick: int = 0
+	generate_world_terrain()
 
 	for !rl.WindowShouldClose() {
-
 
 		tick += 1
 		if tick >= 50 && len(cube_path) > 0 {
@@ -115,16 +112,14 @@ main :: proc() {
 				}
 
 				// Draw simple map Tiles
-				for x in 0..< world_size {
-					for z in 0..< world_size {
-						this_pos: vec3i = {x, 0, z}
-						if this_pos == disabled_cell {
-							rl.DrawModel(sand_tile, {f32(x), 0, f32(z)}, 1.0, rl.WHITE)
-						} else {
-							rl.DrawModel(grass_tile, {f32(x), 0, f32(z)}, 1.0, rl.WHITE)
-						}
-					}
-				} 
+				// for x in 0..< world_size {
+				// 	for z in 0..< world_size {
+				// 		this_pos: vec3i = {x, 0, z}
+				// 		rl.DrawModel(grass_tile, {f32(x), 0, f32(z)}, 1.0, rl.WHITE)
+				// 	}
+				// } 
+
+				draw_world_terrain()
 
 				// Draw Walls
 				for key_pos, &cell in world {
