@@ -3,8 +3,6 @@ package Atalay
 import fmt "core:fmt" 
 import math "core:math"
 
-world_size :: 25
-
 world: map[vec3i]cell
 
 cell :: struct {
@@ -12,7 +10,6 @@ cell :: struct {
 	cells_conected: map[vec3i]bool,
 	position: vec3i,
 	walls: [4]Wall,
-	tile: Tile
 }
 
 node :: struct {
@@ -21,43 +18,68 @@ node :: struct {
 	prev: vec3i,
 }
 
-neighbor_dirs: [4]vec3i = {
+neighbor_dirs: [dynamic]vec3i = {
 	N,
 	S,
 	E,
 	W,
+	UP,
+	DONW,
+	UP + N,
+	UP + S,
+	UP + E,
+	UP + W,
 }
 
 init_world_path :: proc() {
-	fmt.println("Path Find Setup Ready...") //##############
-
 	//Init World Structure
-	for x in 0..< world_size {
-		for y in 0..< world_size {
-			for z in 0..< world_size {
+	ind: int = 0
+	for x in 0..< CHUNK_SIZE.x {
+		for y in 0..< CHUNK_SIZE.y {
+			for z in 0..< CHUNK_SIZE.z {
+				ind += 1
+
 				pos: vec3i = {x, y, z}
+				pos2d: vec2i = {x, z}
+				walk: bool = (pos2d in terrain && terrain[pos2d].floor_height == y)
+
+				fmt.println(walk, ind, terrain[pos2d].floor_height)
 
 				world[pos] = {
-					true,
+					walk,
 					{},
 					pos,
 					{},
-					.GRASS // Default, should be controlled by temp, moist, etc
 				}
 			}
 		}
 	}
 
-	// Fill World Cells Data
-	for key_pos, &cell in world {
-		for dir in neighbor_dirs {
-			neighbor_pos := key_pos + dir
 
-			if neighbor_pos in world {
-				connect_cell(neighbor_pos, key_pos, true)
+	// Fill World Cells Data
+	for key_pos, &terrain_cell in terrain {
+		this_pos: vec3i = {key_pos.x, terrain_cell.floor_height, key_pos.y}
+		for dir in neighbor_dirs {
+			neighbor := this_pos + dir 
+			neighbor2d: vec2i = {neighbor.x, neighbor.z}
+
+			if neighbor in world {
+				connect_cell(this_pos, neighbor, true)
 			}
-		}
+		} 
 	}
+
+	fmt.println("Path Find Setup Ready...") //##############
+
+	// for key_pos, &cell in world {
+	// 	for dir in neighbor_dirs {
+	// 		neighbor_pos := key_pos + dir
+
+	// 		if neighbor_pos in world {
+	// 			connect_cell(neighbor_pos, key_pos, true)
+	// 		}
+	// 	}
+	// }
 }
 
 connect_cell :: proc(A, B: vec3i, bidirectional: bool) {

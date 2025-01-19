@@ -43,8 +43,6 @@ Wall :: struct {
 ////
 
 main :: proc() {
-	// INITS 
-	init_world_path()
 
 	////
 	rl.InitWindow(1400, 750, "Atalay")
@@ -64,11 +62,19 @@ main :: proc() {
 	wall_tile = rl.LoadModel("assets/Log_Wall.obj")
 	wall_tile.materials[0].maps[0].texture = world_atlas
 	defer rl.UnloadModel(wall_tile)
+	
+	// INITS 
+	generate_world_terrain()
+	init_world_path()
 
 	rl.SetTargetFPS(60)
 
 	tick: int = 0
-	generate_world_terrain()
+
+	//##
+	init_rat()
+
+	//##
 
 	for !rl.WindowShouldClose() {
 		tick += 1
@@ -110,14 +116,6 @@ main :: proc() {
 				if gamemode == .POINTER {
 					rl.DrawCubeV(to_v3(pointer_pos) + {0.5, 0.5, 0.5}, {1, 1, 1}, rl.BLUE)
 				}
-
-				// Draw simple map Tiles
-				// for x in 0..< world_size {
-				// 	for z in 0..< world_size {
-				// 		this_pos: vec3i = {x, 0, z}
-				// 		rl.DrawModel(grass_tile, {f32(x), 0, f32(z)}, 1.0, rl.WHITE)
-				// 	}
-				// } 
 
 				draw_world_terrain()
 

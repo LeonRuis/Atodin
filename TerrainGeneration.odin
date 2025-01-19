@@ -35,8 +35,6 @@ generate_world_terrain :: proc() {
 			}
 		}
 	}
-
-	fmt.println(len(terrain))
 }
 
 terrain: map[vec2i]terrain_cell

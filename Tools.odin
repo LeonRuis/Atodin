@@ -13,10 +13,10 @@ to_v3 :: proc(a: vec3i) -> vec3{
 }
 
 ran_v3i :: proc() -> vec3i {
-	x := rand.int31_max(world_size)
-	y := rand.int31_max(world_size)
+	x: int = int(rand.int31_max(i32(CHUNK_SIZE.x)))
+	z: int = int(rand.int31_max(i32(CHUNK_SIZE.z)))
 
-	return {int(x), 0, int(y)}
+	return {int(x), 0, int(z)}
  }
 ////----------------------------------------------
 
@@ -24,3 +24,6 @@ N :: vec3i{0, 0, -1}
 S :: vec3i{0, 0, 1}
 E :: vec3i{1, 0, 0}
 W :: vec3i{-1, 0, 0}
+
+UP :: vec3i{0, 1, 0}
+DONW :: vec3i{0, -1, 0}
