@@ -29,3 +29,7 @@ control_place_wall_btn :: proc() {
 	rl.DrawRectangleV({f32(x), f32(y)}, {size_x, size_y}, color)
 	rl.DrawText("Place Walls", x + 25, y + 4, 25, rl.BLACK)
 }
+
+selected_entity_gui :: proc() {
+	rl.DrawText(current_entity.name, 0, 0, 40, rl.BLACK)
+}

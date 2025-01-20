@@ -8,7 +8,10 @@ Entity :: struct {
 	pos: vec3i,
 	target_pos: vec3i,
 	path: [dynamic]vec3i,
-	state: Entity_State
+	state: Entity_State,
+	color: rl.Color,
+
+	name: cstring
 }
 
 Entity_State :: enum {
@@ -17,10 +20,6 @@ Entity_State :: enum {
 }
 
 //##
-init_rat :: proc() {
-	rat_test.pos = rand_()
-}
-
 rand_ :: proc() -> vec3i {
 	x: int = int(rand.int31_max(i32(CHUNK_SIZE.x)))
 	z: int = int(rand.int31_max(i32(CHUNK_SIZE.z)))
@@ -29,15 +28,50 @@ rand_ :: proc() -> vec3i {
 	return {int(x), int(y), int(z)}
 }
 
-rat_test: Entity = {
+gray_rat: Entity = {
 	{0, 0, 0},
 	{0, 0, 0},
 	{},
-	.IDLE
+	.IDLE,
+	rl.LIGHTGRAY,
+
+	"Gray Rat"
+}
+
+orange_rat: Entity = {
+	{0, 0, 0},
+	{0, 0, 0},
+	{},
+	.IDLE,
+	rl.MAROON,
+
+	"Orange"
+}
+
+entities: [2]Entity
+
+test_init_rats :: proc() {
+	gray_rat.pos = rand_()
+	orange_rat.pos = rand_()
+
+	entities[0] = gray_rat
+	entities[1] = orange_rat 
 }
 
 draw_rat :: proc() {
-	rl.DrawCubeV(to_v3(rat_test.pos) + {0.5, 0.5, 0.5}, {1, 1, 1}, rl.LIGHTGRAY)
+	for &ent in entities {
+		rl.DrawCubeV(to_v3(to_visual_world(ent.pos)) + {0.5, 0.5, 0.5}, {1, 1, 1}, ent.color)
+
+		fmt.println(ent.name, ent.pos)
+	}
+
+	fmt.println("========================== ")
+}
+
+wonder_entities :: proc() {
+	for &ent in entities {
+		wonder_entity(&ent)
+	}
 }
 //##
 
@@ -51,6 +85,16 @@ wonder_entity :: proc(ent: ^Entity) {
 		ent.path = path(ent.pos, ent.target_pos)
 	}
 
+	cell := &world[ent.pos] 
+	cell.entity = {}
+
 	ent.pos = ent.path[0]
+	cell = &world[ent.pos] 
+	cell.entity = ent
+
 	ordered_remove(&ent.path, 0)
+}
+
+to_visual_world :: proc(cell_pos: vec3i) -> vec3i {
+	return {cell_pos.x, cell_pos.y * 2, cell_pos.z}
 }

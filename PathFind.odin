@@ -10,6 +10,7 @@ cell :: struct {
 	cells_conected: map[vec3i]bool,
 	position: vec3i,
 	walls: [4]Wall,
+	entity: ^Entity
 }
 
 node :: struct {
@@ -43,13 +44,12 @@ init_world_path :: proc() {
 				pos2d: vec2i = {x, z}
 				walk: bool = (pos2d in terrain && terrain[pos2d].floor_height == y)
 
-				fmt.println(walk, ind, terrain[pos2d].floor_height)
-
 				world[pos] = {
 					walk,
 					{},
 					pos,
 					{},
+					{}
 				}
 			}
 		}
@@ -71,15 +71,6 @@ init_world_path :: proc() {
 
 	fmt.println("Path Find Setup Ready...") //##############
 
-	// for key_pos, &cell in world {
-	// 	for dir in neighbor_dirs {
-	// 		neighbor_pos := key_pos + dir
-
-	// 		if neighbor_pos in world {
-	// 			connect_cell(neighbor_pos, key_pos, true)
-	// 		}
-	// 	}
-	// }
 }
 
 connect_cell :: proc(A, B: vec3i, bidirectional: bool) {

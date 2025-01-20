@@ -21,10 +21,6 @@ grass_tile: rl.Model
 sand_tile: rl.Model
 wall_tile: rl.Model
 
-cube_pos: vec3i = {0, 0, 0}
-cube_target: vec3i = {0, 0, 2}
-cube_path: [dynamic]vec3i
-
 pointer_pos: vec3i
 
 GameMode :: enum {
@@ -70,17 +66,18 @@ main :: proc() {
 	rl.SetTargetFPS(60)
 
 	tick: int = 0
+	pause: bool = false
 
 	//##
-	init_rat()
+	test_init_rats()
 
 	//##
 
 	for !rl.WindowShouldClose() {
 		tick += 1
-		if tick >= 50 {
+		if tick >= 50 && pause == false{
 			tick = 0
-			wonder_entity(&rat_test)
+			wonder_entities()
 		}		
 
 		if gamemode != .GUI {
@@ -91,7 +88,9 @@ main :: proc() {
 		//// Update Entity Target
 		if gamemode == .POINTER {
 			if rl.IsMouseButtonReleased(.LEFT) {
-				cube_path = path(cube_pos, pointer_pos)
+				if world[pointer_pos].entity != {} {
+					current_entity = world[pointer_pos].entity 
+				}
 			}
 		}
 
@@ -104,6 +103,11 @@ main :: proc() {
 			}
 		}
 
+		//// Pause
+		if rl.IsKeyReleased(.SPACE) {
+			pause = !pause 
+		}
+
 		rl.BeginDrawing()
 			rl.ClearBackground(rl.GRAY)
 
@@ -111,10 +115,11 @@ main :: proc() {
 				//##
 				draw_rat()
 				//##
+
 				// Draw Mouse Pointer
 				update_pointer()
 				if gamemode == .POINTER {
-					rl.DrawCubeV(to_v3(pointer_pos) + {0.5, 0.5, 0.5}, {1, 1, 1}, rl.BLUE)
+					rl.DrawCubeWiresV(to_v3(to_visual_world(pointer_pos)) + {0.5, 0.5, 0.5}, {1, 1, 1}, rl.BLUE)
 				}
 
 				draw_world_terrain()
@@ -137,13 +142,14 @@ main :: proc() {
 					update_wall()
 				}
 
-				rl.DrawCubeV(to_v3(cube_pos) + {0.5, 0.5, 0.5}, {1, 1, 1}, rl.RED)
 			rl.EndMode3D()
 
 			//// GUI
 			if gamemode == .GUI {
 				control_place_wall_btn()
 			}
+
+			selected_entity_gui()
 
 		rl.EndDrawing()
 	}

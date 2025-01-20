@@ -46,6 +46,6 @@ terrain_cell :: struct {
 
 draw_world_terrain :: proc() {
 	for key_pos, &cell in terrain {
-			rl.DrawModel(cell.tile, {f32(key_pos.x), f32(cell.floor_height), f32(key_pos.y)}, 1.0, rl.WHITE)
+			rl.DrawModel(cell.tile, {f32(key_pos.x), f32(cell.floor_height * 2) , f32(key_pos.y)}, 1.0, rl.WHITE)
 		}
 }
