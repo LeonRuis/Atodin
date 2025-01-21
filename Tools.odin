@@ -17,7 +17,8 @@ ran_v3i :: proc() -> vec3i {
 	z: int = int(rand.int31_max(i32(CHUNK_SIZE.z)))
 
 	return {int(x), 0, int(z)}
- }
+}
+
 ////----------------------------------------------
 
 N :: vec3i{0, 0, -1}

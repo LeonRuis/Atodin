@@ -61,11 +61,7 @@ test_init_rats :: proc() {
 draw_rat :: proc() {
 	for &ent in entities {
 		rl.DrawCubeV(to_v3(to_visual_world(ent.pos)) + {0.5, 0.5, 0.5}, {1, 1, 1}, ent.color)
-
-		fmt.println(ent.name, ent.pos)
 	}
-
-	fmt.println("========================== ")
 }
 
 wonder_entities :: proc() {

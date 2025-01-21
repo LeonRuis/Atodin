@@ -21,16 +21,6 @@ grass_tile: rl.Model
 sand_tile: rl.Model
 wall_tile: rl.Model
 
-pointer_pos: vec3i
-
-GameMode :: enum {
-	POINTER,
-	GUI,
-	WALL_PLACE,
-}
-
-gamemode: GameMode = .POINTER
-
 Wall :: struct {
 	model: rl.Model,
 	pos: vec3,
@@ -63,6 +53,8 @@ main :: proc() {
 	generate_world_terrain()
 	init_world_path()
 
+	test_struct()
+
 	rl.SetTargetFPS(60)
 
 	tick: int = 0
@@ -80,26 +72,18 @@ main :: proc() {
 			wonder_entities()
 		}		
 
-		if gamemode != .GUI {
+		if !in_gui {
 			rl.UpdateCamera(&camera3, .FREE)
 		}
 
 			//// Inputs
-		//// Update Entity Target
-		if gamemode == .POINTER {
-			if rl.IsMouseButtonReleased(.LEFT) {
-				if world[pointer_pos].entity != {} {
-					current_entity = world[pointer_pos].entity 
-				}
-			}
-		}
 
 		//// Free Cursor
 		if rl.IsKeyReleased(.TAB) {
 			if gamemode == .GUI {
-				set_pointer_mode()
+				set_mode(.POINTER)
 			} else {
-				set_gui_mode()
+				set_mode(.GUI)
 			}
 		}
 
@@ -116,11 +100,10 @@ main :: proc() {
 				draw_rat()
 				//##
 
-				// Draw Mouse Pointer
 				update_pointer()
-				if gamemode == .POINTER {
-					rl.DrawCubeWiresV(to_v3(to_visual_world(pointer_pos)) + {0.5, 0.5, 0.5}, {1, 1, 1}, rl.BLUE)
-				}
+
+					//// Modes Update
+				update_mode()
 
 				draw_world_terrain()
 
@@ -129,27 +112,26 @@ main :: proc() {
 					for &wall in cell.walls {
 						rl.DrawModelEx(
 							wall.model, 
-							wall.pos,
+							wall.pos * {1, 2, 1},
 							{0, 1, 0},
 							wall.rot,
 							{1, 1, 1},
 							rl.WHITE)
 					}
 				}
-
-				// Draw Wall pointer for wall placing
-				if gamemode == .WALL_PLACE {
-					update_wall()
-				}
-
+				
 			rl.EndMode3D()
 
-			//// GUI
+				//// GUIS
 			if gamemode == .GUI {
-				control_place_wall_btn()
+				menu_modes()
 			}
 
-			selected_entity_gui()
+			if gamemode == .RIGHT_CLICK {
+				menu_right_click()
+			}
+			
+			// selected_entity_gui()
 
 		rl.EndDrawing()
 	}
@@ -178,88 +160,5 @@ update_pointer :: proc() {
 
 	height := terrain[{int(pointer.x), int(pointer.z)}].floor_height
 	pointer_pos = {int(pointer.x), int(height), int(pointer.z)}
-}
-////
-
-wall_rotation: int = 0
-update_wall :: proc() {
-	rot: f32
-	pos: vec3
-	cell_to_disconnect: vec3i
-
-	if rl.IsKeyPressed(.R) {
-		wall_rotation += 1
-	}
-	if wall_rotation == 4 {
-		wall_rotation = 0
-	}
-
-	switch wall_rotation {
-	case 0:
-		// North
-		rot = 0
-		pos = to_v3(pointer_pos)
-		cell_to_disconnect = pointer_pos + N
-	case 1: 
-		// East
-		rot = -90
-		pos = to_v3(pointer_pos + E)
-		cell_to_disconnect = pointer_pos + E
-	case 2: 
-		// South 
-		rot = 0
-		pos = to_v3(pointer_pos + S)
-		cell_to_disconnect = pointer_pos + S
-	case 3: 
-		// West
-		rot = 90
-		pos = to_v3(pointer_pos + S)
-		cell_to_disconnect = pointer_pos + W
-	}
-
-	rl.DrawModelEx(
-		wall_tile,
-		pos,
-		{0, 1, 0},
-		rot,
-		{1, 1, 1},
-		rl.WHITE
-		)
-
-	// Set Wall in World
-	if rl.IsMouseButtonReleased(.LEFT) {
-		new_wall: Wall = {
-			wall_tile,
-			pos,
-			rot
-		}
-
-		cell := &world[pointer_pos]
-		cell.walls[wall_rotation] = new_wall
-
-		disconnect_cells(pointer_pos, cell_to_disconnect)
-	}
-}
-
-//// Modes
-	// Pointer
-set_pointer_mode :: proc() {
-	gamemode = .POINTER
-	rl.DisableCursor()
-}
-
-update_pointer_mode :: proc () {
-
-}
-	//
-
-set_gui_mode :: proc() {
-	gamemode = .GUI
-	rl.EnableCursor()
-}
-
-set_place_wall_mode :: proc() {
-	gamemode = .WALL_PLACE
-	rl.DisableCursor()
 }
 ////
