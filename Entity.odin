@@ -38,24 +38,25 @@ gray_rat: Entity = {
 	"Gray Rat"
 }
 
-orange_rat: Entity = {
-	{0, 0, 0},
-	{0, 0, 0},
-	{},
-	.IDLE,
-	rl.MAROON,
+// orange_rat: Entity = {
+// 	{0, 0, 0},
+// 	{0, 0, 0},
+// 	{},
+// 	.IDLE,
+// 	rl.MAROON,
 
-	"Orange"
-}
+// 	"Orange"
+// }
 
-entities: [2]Entity
+entities: [1]^Entity
 
 test_init_rats :: proc() {
-	gray_rat.pos = rand_()
-	orange_rat.pos = rand_()
+	// gray_rat.pos = rand_()
+	gray_rat.pos = {0, 1, 0}
+	// orange_rat.pos = rand_()
 
-	entities[0] = gray_rat
-	entities[1] = orange_rat 
+	entities[0] = &gray_rat
+	// entities[1] = &orange_rat 
 }
 
 draw_rat :: proc() {
@@ -65,8 +66,8 @@ draw_rat :: proc() {
 }
 
 wonder_entities :: proc() {
-	for &ent in entities {
-		wonder_entity(&ent)
+	for ent in entities {
+		walk_entity(ent)
 	}
 }
 //##
@@ -85,6 +86,7 @@ wonder_entity :: proc(ent: ^Entity) {
 	cell.entity = {}
 
 	ent.pos = ent.path[0]
+
 	cell = &world[ent.pos] 
 	cell.entity = ent
 
@@ -93,4 +95,30 @@ wonder_entity :: proc(ent: ^Entity) {
 
 to_visual_world :: proc(cell_pos: vec3i) -> vec3i {
 	return {cell_pos.x, cell_pos.y * 2, cell_pos.z}
+}
+
+set_entity_target_pos :: proc(ent: ^Entity, tar: vec3i) {
+	ent.target_pos = tar
+	ent.path = path(ent.pos, ent.target_pos) 
+}
+
+walk_entity :: proc(ent: ^Entity) {
+	if ent.pos == ent.target_pos {
+		fmt.println("Target Reached")
+	}
+	
+	if len(ent.path) == 0 {
+		fmt.println("No path")
+		return
+	} 
+
+	cell := &world[ent.pos] 
+	cell.entity = {}
+
+	ent.pos = ent.path[0]
+
+	cell = &world[ent.pos] 
+	cell.entity = ent
+
+	ordered_remove(&ent.path, 0)
 }

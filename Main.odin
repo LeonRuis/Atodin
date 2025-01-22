@@ -53,8 +53,6 @@ main :: proc() {
 	generate_world_terrain()
 	init_world_path()
 
-	test_struct()
-
 	rl.SetTargetFPS(60)
 
 	tick: int = 0

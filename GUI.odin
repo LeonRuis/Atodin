@@ -3,20 +3,10 @@ package Atalay
 import rl "vendor:raylib"
 import fmt "core:fmt"
 
-test :: struct {
-	action: proc()
-}
-
-test_struct :: proc() {
-	a_test: test = {
-		test_proc
-	}
-
-	a_test.action()
-}
-
-test_proc :: proc() {
-	fmt.println("===================================================")	
+Button :: struct {
+	title: cstring,
+	action: proc(),
+	rect: rl.Rectangle
 }
 
 //----------------- Menu Modes ------------------------------------------------------
@@ -39,46 +29,34 @@ menu_modes :: proc() {
 	if rl.GuiWindowBox(menu_rect, menu_title) == 1 {
 		set_mode(.POINTER)
 	}
+	
+	// Buttons
+	btn_place_wall: Button = {
+		"Place Walls",
+		pressed_place_wall,
+		{}
+	}	
 
-	offset: f32 = 25
-	offset += btn_place_wall(menu_rect, offset)
-	btn_pointer(menu_rect, offset)
+	btn_pointer: Button = {
+		"Pointer",
+		pressed_pointer,
+		{}
+	}	
+
+	menu_buttons: [2]Button = {
+		btn_place_wall,
+		btn_pointer
+	}
+
+	control_buttons(&menu_buttons, menu_rect)
 }
 
-btn_place_wall :: proc(rect: rl.Rectangle, offset: f32) -> f32 {
-	btn_title: cstring = "Place Walls"
-
-	btn_size_x: f32 = rect.width 
-	btn_size_y: f32 = 30
-
-	btn_rect: rl.Rectangle = {
-		rect.x, rect.y + offset, 
-		btn_size_x, btn_size_y
-	}
-
-	if rl.GuiButton(btn_rect, btn_title) {
-		set_mode(.WALL_PLACE)
-	}
-
-	return btn_rect.y 
+pressed_place_wall :: proc() {
+	set_mode(.WALL_PLACE)
 }
 
-btn_pointer :: proc(rect: rl.Rectangle, offset: f32) -> f32 {
-	btn_title: cstring = "Pointer"
-
-	btn_size_x: f32 = rect.width 
-	btn_size_y: f32 = 30
-
-	btn_rect: rl.Rectangle = {
-		rect.x, rect.y + offset, 
-		btn_size_x, btn_size_y
-	}
-
-	if rl.GuiButton(btn_rect, btn_title) {
-		set_mode(.POINTER)
-	}
-
-	return btn_rect.y
+pressed_pointer :: proc() {
+	set_mode(.POINTER)
 }
 
 //----------------- Right Mouse Options ---------------------------------------
@@ -94,66 +72,44 @@ menu_right_click :: proc() {
 
 	rl.GuiPanel(menu_rect, "Options")
 
-	if rl.IsMouseButtonPressed(.LEFT) {
-		set_mode(.POINTER)
+	// Buttons
+	btn_move_here: Button = {
+		"Move Entity Here...",
+		pressed_move_here,
+		{}
 	}
+
+	menu_buttons: [1]Button = {
+		btn_move_here
+	}
+
+	control_buttons(&menu_buttons, menu_rect)
 }
 
-////
-control_place_wall_btn :: proc() {
+pressed_move_here :: proc() {
+	set_entity_target_pos(current_entity, pointer_pos)
+	set_mode(.POINTER)
+}
 
-	x: i32 = 0
-	y: i32 = 0	 
+//---------------- Tools -------------------------------------
+control_buttons :: proc(buttons: ^$T, menu_rect: rl.Rectangle) {
+	btn_size_x: f32 = menu_rect.width
+	btn_size_y: f32 = 30
 
-	size_x: f32 = 200
-	size_y: f32 = 30
+	btn_y_offset: f32 = 25
 
-	color := rl.RED
-
-	// Control Button
-	mouse_point := rl.GetMousePosition()
-	mouse_on: bool = rl.CheckCollisionPointRec(mouse_point, {f32(x), f32(y), size_x, size_y})
-
-	if mouse_on {
-		color = rl.GREEN
-
-		if rl.IsMouseButtonReleased(.LEFT) {
-			set_mode(.WALL_PLACE)
+	for btn in buttons {
+		new_rect: rl.Rectangle = {
+			menu_rect.x,
+			menu_rect.y + btn_y_offset,
+			btn_size_x,
+			btn_size_y
 		}
-	}
 
-	// Draw Button
-	rl.DrawRectangleV({f32(x), f32(y)}, {size_x, size_y}, color)
-	rl.DrawText("Place Walls", x + 25, y + 4, 25, rl.BLACK)
-}
-
-control_move_entity_btn :: proc() {
-	size_x: f32 = 200
-	size_y: f32 = 30
-
-	x: i32 = i32(size_x) + 10
-	y: i32 = 0	 
-
-	color := rl.RED
-
-	// Control Button
-	mouse_point := rl.GetMousePosition()
-	mouse_on: bool = rl.CheckCollisionPointRec(mouse_point, {f32(x), f32(y), size_x, size_y})
-
-	if mouse_on {
-		color = rl.GREEN
-
-		if rl.IsMouseButtonReleased(.LEFT) {
-			set_mode(.MOVE_ENTITY)
+		if rl.GuiButton(new_rect, btn.title) {
+			btn.action()
 		}
+
+		btn_y_offset += btn_size_y
 	}
-
-	// Draw Button
-	rl.DrawRectangleV({f32(x), f32(y)}, {size_x, size_y}, color)
-	rl.DrawText("Move Selected Entity", x + 25, y + 4, 25, rl.BLACK)
-}
-////
-
-selected_entity_gui :: proc() {
-	// rl.DrawText(current_entity.name, 0, 0, 40, rl.BLACK)
 }
