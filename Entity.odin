@@ -11,7 +11,8 @@ Entity :: struct {
 	state: Entity_State,
 	color: rl.Color,
 
-	name: cstring
+	name: cstring,
+	model: rl.Model
 }
 
 Entity_State :: enum {
@@ -32,84 +33,73 @@ gray_rat: Entity = {
 	{0, 0, 0},
 	{0, 0, 0},
 	{},
-	.IDLE,
+	.WONDER,
 	rl.LIGHTGRAY,
 
-	"Gray Rat"
+	"Gray Rat",
+	{}
 }
 
-// orange_rat: Entity = {
-// 	{0, 0, 0},
-// 	{0, 0, 0},
-// 	{},
-// 	.IDLE,
-// 	rl.MAROON,
+orange_rat: Entity = {
+	{0, 0, 0},
+	{0, 0, 0},
+	{},
+	.WONDER,
+	rl.MAROON,
 
-// 	"Orange"
-// }
+	"Orange",
+	{}
+}
 
-entities: [1]^Entity
+entities: [2]^Entity
 
 test_init_rats :: proc() {
-	// gray_rat.pos = rand_()
-	gray_rat.pos = {0, 1, 0}
-	// orange_rat.pos = rand_()
+	gray_rat.pos = rand_()
+	orange_rat.pos = rand_()
+
+	gray_rat.model = rat_blue_model
+	orange_rat.model = rat_orange_model 
 
 	entities[0] = &gray_rat
-	// entities[1] = &orange_rat 
+	entities[1] = &orange_rat 
 }
 
 draw_rat :: proc() {
-	for &ent in entities {
-		rl.DrawCubeV(to_v3(to_visual_world(ent.pos)) + {0.5, 0.5, 0.5}, {1, 1, 1}, ent.color)
+	for ent in entities {
+		rl.DrawCubeWiresV(to_v3(to_visual_world(ent.pos)) + {0.5, 0.5, 0.5}, {1, 1, 1}, ent.color)
+		rl.DrawModel(
+				ent.model, 
+				to_v3(to_visual_world(ent.pos)),
+				1,
+				rl.WHITE
+			)
+
 	}
 }
 
-wonder_entities :: proc() {
+entity_state :: proc() {
 	for ent in entities {
-		walk_entity(ent)
+		if ent.state == .WONDER && !walk_entity(ent) {
+			set_entity_target_pos(ent, rand_())
+		}
 	}
 }
 //##
-
-wonder_entity :: proc(ent: ^Entity) {
-	if ent.pos == ent.target_pos {
-		fmt.println("Entity Reached Target")
-	}
-
-	if len(ent.path) == 0 {
-		ent.target_pos = rand_()	
-		ent.path = path(ent.pos, ent.target_pos)
-	}
-
-	cell := &world[ent.pos] 
-	cell.entity = {}
-
-	ent.pos = ent.path[0]
-
-	cell = &world[ent.pos] 
-	cell.entity = ent
-
-	ordered_remove(&ent.path, 0)
-}
-
-to_visual_world :: proc(cell_pos: vec3i) -> vec3i {
-	return {cell_pos.x, cell_pos.y * 2, cell_pos.z}
-}
 
 set_entity_target_pos :: proc(ent: ^Entity, tar: vec3i) {
 	ent.target_pos = tar
 	ent.path = path(ent.pos, ent.target_pos) 
 }
 
-walk_entity :: proc(ent: ^Entity) {
+walk_entity :: proc(ent: ^Entity) -> bool{
 	if ent.pos == ent.target_pos {
 		fmt.println("Target Reached")
+		return false
 	}
 	
 	if len(ent.path) == 0 {
-		fmt.println("No path")
-		return
+		fmt.println("Not moving, no path assigned")
+		return false
 	} 
 
 	cell := &world[ent.pos] 
@@ -121,4 +111,5 @@ walk_entity :: proc(ent: ^Entity) {
 	cell.entity = ent
 
 	ordered_remove(&ent.path, 0)
+	return true
 }

@@ -19,6 +19,10 @@ ran_v3i :: proc() -> vec3i {
 	return {int(x), 0, int(z)}
 }
 
+to_visual_world :: proc(cell_pos: vec3i) -> vec3i {
+	return {cell_pos.x, cell_pos.y * 2, cell_pos.z}
+}
+
 ////----------------------------------------------
 
 N :: vec3i{0, 0, -1}

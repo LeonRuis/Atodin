@@ -21,6 +21,12 @@ grass_tile: rl.Model
 sand_tile: rl.Model
 wall_tile: rl.Model
 
+rat_blue_model: rl.Model
+rat_orange_model: rl.Model
+
+rat_blue_texture: rl.Texture
+rat_orange_texture: rl.Texture
+
 Wall :: struct {
 	model: rl.Model,
 	pos: vec3,
@@ -48,7 +54,19 @@ main :: proc() {
 	wall_tile = rl.LoadModel("assets/Log_Wall.obj")
 	wall_tile.materials[0].maps[0].texture = world_atlas
 	defer rl.UnloadModel(wall_tile)
-	
+
+	rat_blue_texture = rl.LoadTexture("assets/Rat_1.png")
+	rat_blue_model = rl.LoadModel("assets/Rat.obj")
+	rat_blue_model.materials[0].maps[0].texture = rat_blue_texture
+	defer rl.UnloadTexture(rat_blue_texture)
+	defer rl.UnloadModel(rat_blue_model)
+
+	rat_orange_texture = rl.LoadTexture("assets/Rat_2.png")
+	rat_orange_model = rl.LoadModel("assets/Rat.obj")
+	rat_orange_model.materials[0].maps[0].texture = rat_orange_texture
+	defer rl.UnloadTexture(rat_orange_texture)
+	defer rl.UnloadModel(rat_orange_model)
+
 	// INITS 
 	generate_world_terrain()
 	init_world_path()
@@ -67,7 +85,7 @@ main :: proc() {
 		tick += 1
 		if tick >= 50 && pause == false{
 			tick = 0
-			wonder_entities()
+			entity_state()
 		}		
 
 		if !in_gui {
@@ -128,8 +146,8 @@ main :: proc() {
 			if gamemode == .RIGHT_CLICK {
 				menu_right_click()
 			}
-			
-			// selected_entity_gui()
+
+			entity_gui()
 
 		rl.EndDrawing()
 	}

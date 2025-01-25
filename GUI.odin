@@ -90,6 +90,34 @@ pressed_move_here :: proc() {
 	set_entity_target_pos(current_entity, pointer_pos)
 	set_mode(.POINTER)
 }
+//-------------------------------------------------------------------------------
+entity_gui :: proc() {
+	menu_width: f32 = 100
+	menu_height: f32 = 100
+
+	menu_x: f32 = 0
+	menu_y: f32 = WINDOW_HEIGHT - menu_height
+
+	rect: rl.Rectangle = {
+		menu_x, 
+		menu_y,
+		menu_width,
+		menu_height	
+	}
+
+	rl.GuiPanel(rect, current_entity.name)
+	rl.GuiLabel(rect, get_entity_state())
+}
+
+get_entity_state :: proc() -> cstring {
+	#partial switch current_entity.state {
+	case .WONDER:
+		return "Wonder"
+
+	case: 
+		return "NO VALID"
+	}
+}
 
 //---------------- Tools -------------------------------------
 control_buttons :: proc(buttons: ^$T, menu_rect: rl.Rectangle) {
