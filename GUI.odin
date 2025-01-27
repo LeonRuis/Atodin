@@ -87,7 +87,7 @@ menu_right_click :: proc() {
 }
 
 pressed_move_here :: proc() {
-	set_entity_target_pos(current_entity, pointer_pos)
+	add_task(current_entity, Move_To{pointer_pos, false})
 	set_mode(.POINTER)
 }
 //-------------------------------------------------------------------------------
@@ -106,16 +106,31 @@ entity_gui :: proc() {
 	}
 
 	rl.GuiPanel(rect, current_entity.name)
-	rl.GuiLabel(rect, get_entity_state())
+
+	offset: f32 = 25 
+	for task, i in current_entity.tasks {
+		btn_rect: rl.Rectangle = {
+			menu_x,
+			menu_y + offset,
+			menu_width,
+			30
+		} 
+		
+		if rl.GuiButton(btn_rect, get_task_title(task)) {
+			ordered_remove(&current_entity.tasks, i)
+		}		
+
+		offset += 30
+	}
 }
 
-get_entity_state :: proc() -> cstring {
-	#partial switch current_entity.state {
-	case .WONDER:
-		return "Wonder"
+get_task_title :: proc(task: Task) -> cstring{
+	#partial switch t in task {
+		case Move_To:
+			return "Move To..."
 
-	case: 
-		return "NO VALID"
+		case: 
+			return "Not Defined Task"
 	}
 }
 

@@ -85,7 +85,7 @@ main :: proc() {
 		tick += 1
 		if tick >= 50 && pause == false{
 			tick = 0
-			entity_state()
+			entity_state(&gray_rat)
 		}		
 
 		if !in_gui {

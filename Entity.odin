@@ -8,16 +8,11 @@ Entity :: struct {
 	pos: vec3i,
 	target_pos: vec3i,
 	path: [dynamic]vec3i,
-	state: Entity_State,
 	color: rl.Color,
 
 	name: cstring,
-	model: rl.Model
-}
-
-Entity_State :: enum {
-	IDLE,
-	WONDER,
+	model: rl.Model,
+	tasks: [dynamic]Task,
 }
 
 //##
@@ -33,22 +28,22 @@ gray_rat: Entity = {
 	{0, 0, 0},
 	{0, 0, 0},
 	{},
-	.WONDER,
 	rl.LIGHTGRAY,
 
 	"Gray Rat",
-	{}
+	{},
+	{},
 }
 
 orange_rat: Entity = {
 	{0, 0, 0},
 	{0, 0, 0},
 	{},
-	.WONDER,
 	rl.MAROON,
 
 	"Orange",
-	{}
+	{},
+	{},
 }
 
 entities: [2]^Entity
@@ -77,14 +72,16 @@ draw_rat :: proc() {
 	}
 }
 
-entity_state :: proc() {
-	for ent in entities {
-		if ent.state == .WONDER && !walk_entity(ent) {
-			set_entity_target_pos(ent, rand_())
-		}
+update_entity :: proc(ent: ^Entity) {
+	
+	// Task Flow
+	if len(ent.tasks) > 0 {
+		execute_task(ent, ent.tasks[0])
+	} else { 
+		fmt.println("No Task")
 	}
+
 }
-//##
 
 set_entity_target_pos :: proc(ent: ^Entity, tar: vec3i) {
 	ent.target_pos = tar
@@ -94,12 +91,12 @@ set_entity_target_pos :: proc(ent: ^Entity, tar: vec3i) {
 walk_entity :: proc(ent: ^Entity) -> bool{
 	if ent.pos == ent.target_pos {
 		fmt.println("Target Reached")
-		return false
+		return true 
 	}
 	
 	if len(ent.path) == 0 {
 		fmt.println("Not moving, no path assigned")
-		return false
+		return true 
 	} 
 
 	cell := &world[ent.pos] 
@@ -111,5 +108,51 @@ walk_entity :: proc(ent: ^Entity) -> bool{
 	cell.entity = ent
 
 	ordered_remove(&ent.path, 0)
-	return true
+	return false 
+}
+
+//--------------------- Task System -------------------------
+Task :: union {
+	Move_To,
+	Craft,
+}
+
+Move_To :: struct {
+	target_pos: vec3i,
+	init: bool
+}
+
+Craft :: struct {
+	name: cstring,
+	init: bool
+}
+
+add_task :: proc(ent: ^Entity, task: Task) {
+	append(&ent.tasks, task)
+}
+
+execute_task :: proc(ent: ^Entity, task: Task) {
+	switch t in task {
+		case Move_To:
+			if t.init == false {
+				init_task(ent, task)
+			}
+
+			if walk_entity(ent) {
+				ordered_remove(&ent.tasks, 0)
+			}
+
+		case Craft: 
+			fmt.println(t.name)
+			ordered_remove(&ent.tasks, 0)
+	}
+}
+
+init_task :: proc(ent: ^Entity, task: Task) {
+	#partial switch &t in task {
+		case Move_To:
+			ent.target_pos = t.target_pos
+			ent.path = path(ent.pos, ent.target_pos)
+			t.init = true
+	}
 }
