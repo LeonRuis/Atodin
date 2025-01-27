@@ -50,7 +50,12 @@ entities: [2]^Entity
 
 test_init_rats :: proc() {
 	gray_rat.pos = rand_()
+	cell := &world[gray_rat.pos] 
+	cell.entity = &gray_rat
+
 	orange_rat.pos = rand_()
+	cell = &world[orange_rat.pos] 
+	cell.entity = &orange_rat
 
 	gray_rat.model = rat_blue_model
 	orange_rat.model = rat_orange_model 
@@ -73,14 +78,12 @@ draw_rat :: proc() {
 }
 
 update_entity :: proc(ent: ^Entity) {
-	
-	// Task Flow
+	// Task Flow Control
 	if len(ent.tasks) > 0 {
 		execute_task(ent, ent.tasks[0])
 	} else { 
-		fmt.println("No Task")
+		return
 	}
-
 }
 
 set_entity_target_pos :: proc(ent: ^Entity, tar: vec3i) {

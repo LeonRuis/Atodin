@@ -85,7 +85,9 @@ main :: proc() {
 		tick += 1
 		if tick >= 50 && pause == false{
 			tick = 0
-			entity_state(&gray_rat)
+			for ent in entities {
+				update_entity(ent)
+			}
 		}		
 
 		if !in_gui {
