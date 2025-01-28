@@ -91,6 +91,7 @@ pressed_move_here :: proc() {
 	set_mode(.POINTER)
 }
 //-------------------------------------------------------------------------------
+progress_test: f32 = 500 
 entity_gui :: proc() {
 	menu_width: f32 = 100
 	menu_height: f32 = 100
@@ -107,11 +108,30 @@ entity_gui :: proc() {
 
 	rl.GuiPanel(rect, current_entity.name)
 
-	offset: f32 = 25 
+	// Needs
+	water_rect: rl.Rectangle = {
+		rect.x + rect.width, 
+		rect.y,
+		200,
+		menu_height/2	
+	}
+
+	food_rect: rl.Rectangle = {
+		rect.x + rect.width, 
+		rect.y + rect.height/2,
+		200,
+		rect.height/2	
+	}
+
+	rl.GuiProgressBar(water_rect, "", "Water", &progress_test, 0, 1000)
+	rl.GuiProgressBar(food_rect, "", "Food", &progress_test, 0, 1000)
+
+	// Task Buttons
+	btn_task_offset: f32 = 25 
 	for task, i in current_entity.tasks {
 		btn_rect: rl.Rectangle = {
 			menu_x,
-			menu_y + offset,
+			menu_y + btn_task_offset,
 			menu_width,
 			30
 		} 
@@ -119,12 +139,12 @@ entity_gui :: proc() {
 		if rl.GuiButton(btn_rect, get_task_title(task)) {
 			ordered_remove(&current_entity.tasks, i)
 		}		
-
-		offset += 30
+	
+		btn_task_offset += 30
 	}
 }
 
-get_task_title :: proc(task: Task) -> cstring{
+get_task_title :: proc(task: Task) -> cstring {
 	#partial switch t in task {
 		case Move_To:
 			return "Move To..."

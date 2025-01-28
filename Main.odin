@@ -39,6 +39,7 @@ main :: proc() {
 	////
 	rl.InitWindow(1400, 750, "Atalay")
 	rl.DisableCursor()
+	rl.SetExitKey(.BACKSPACE)
 
 	world_atlas = rl.LoadTexture("assets/WorldAtlas.png")
 	defer rl.UnloadTexture(world_atlas)
@@ -82,8 +83,14 @@ main :: proc() {
 	//##
 
 	for !rl.WindowShouldClose() {
+		if progress_test <= 0 {
+
+		} else {
+			progress_test -= 1
+		}
 		tick += 1
-		if tick >= 50 && pause == false{
+
+		if tick >= 25 && pause == false{
 			tick = 0
 			for ent in entities {
 				update_entity(ent)
@@ -96,12 +103,18 @@ main :: proc() {
 
 			//// Inputs
 
-		//// Free Cursor
+		//// Gui Modes 
 		if rl.IsKeyReleased(.TAB) {
 			if gamemode == .GUI {
 				set_mode(.POINTER)
 			} else {
 				set_mode(.GUI)
+			}
+		}
+
+		if rl.IsKeyReleased(.ESCAPE) {
+			if gamemode == .RIGHT_CLICK {
+				set_mode(.POINTER)
 			}
 		}
 
@@ -111,7 +124,7 @@ main :: proc() {
 		}
 
 		rl.BeginDrawing()
-			rl.ClearBackground(rl.GRAY)
+			rl.ClearBackground(rl.SKYBLUE)
 
 			rl.BeginMode3D(camera3)
 				//##
@@ -148,6 +161,8 @@ main :: proc() {
 			if gamemode == .RIGHT_CLICK {
 				menu_right_click()
 			}
+
+			rl.DrawFPS(0, 0)
 
 			entity_gui()
 

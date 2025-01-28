@@ -13,6 +13,11 @@ Entity :: struct {
 	name: cstring,
 	model: rl.Model,
 	tasks: [dynamic]Task,
+
+	water_max: int,
+	water: int,
+	food_max: int,
+	food: int,
 }
 
 //##
@@ -33,6 +38,12 @@ gray_rat: Entity = {
 	"Gray Rat",
 	{},
 	{},
+
+	500,
+	400,
+
+	400,
+	0,
 }
 
 orange_rat: Entity = {
@@ -44,6 +55,12 @@ orange_rat: Entity = {
 	"Orange",
 	{},
 	{},
+
+	500,
+	400,
+
+	400,
+	0,
 }
 
 entities: [2]^Entity
@@ -70,10 +87,9 @@ draw_rat :: proc() {
 		rl.DrawModel(
 				ent.model, 
 				to_v3(to_visual_world(ent.pos)),
-				1,
+				0.5,
 				rl.WHITE
 			)
-
 	}
 }
 
