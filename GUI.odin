@@ -79,19 +79,32 @@ menu_right_click :: proc() {
 		{}
 	}
 
-	menu_buttons: [1]Button = {
-		btn_move_here
+	btn_eat_plant: Button = {
+		"Eat Plant",
+		pressed_eat_plant,
+		{}
 	}
+
+	menu_buttons: [dynamic]Button
+
+	append(&menu_buttons, btn_move_here)
+
+	if pointer_pos in plants {
+		append(&menu_buttons, btn_eat_plant)
+	} 
 
 	control_buttons(&menu_buttons, menu_rect)
 }
 
 pressed_move_here :: proc() {
-	add_task(current_entity, Move_To{pointer_pos, false})
+	add_task(current_entity, Move_To{pointer_pos, false, false})
 	set_mode(.POINTER)
 }
+
+pressed_eat_plant :: proc() {
+	fmt.println("eat_plant")
+}
 //-------------------------------------------------------------------------------
-progress_test: f32 = 500 
 entity_gui :: proc() {
 	menu_width: f32 = 100
 	menu_height: f32 = 100
@@ -123,8 +136,8 @@ entity_gui :: proc() {
 		rect.height/2	
 	}
 
-	rl.GuiProgressBar(water_rect, "", "Water", &progress_test, 0, 1000)
-	rl.GuiProgressBar(food_rect, "", "Food", &progress_test, 0, 1000)
+	rl.GuiProgressBar(water_rect, "", "Water", &current_entity.water, 0, f32(current_entity.water_max))
+	rl.GuiProgressBar(food_rect, "", "Food", &current_entity.food, 0, f32(current_entity.food_max))
 
 	// Task Buttons
 	btn_task_offset: f32 = 25 

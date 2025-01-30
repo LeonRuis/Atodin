@@ -15,9 +15,11 @@ Entity :: struct {
 	tasks: [dynamic]Task,
 
 	water_max: int,
-	water: int,
+	water: f32,
 	food_max: int,
-	food: int,
+	food: f32,
+
+	idle_tick_count: int
 }
 
 //##
@@ -42,8 +44,10 @@ gray_rat: Entity = {
 	500,
 	400,
 
+	500,
 	400,
-	0,
+
+	0
 }
 
 orange_rat: Entity = {
@@ -61,12 +65,14 @@ orange_rat: Entity = {
 
 	400,
 	0,
+
+	0
 }
 
 entities: [2]^Entity
 
 test_init_rats :: proc() {
-	gray_rat.pos = rand_()
+	gray_rat.pos = {0, 1, 0} //rand_()
 	cell := &world[gray_rat.pos] 
 	cell.entity = &gray_rat
 
@@ -84,27 +90,66 @@ test_init_rats :: proc() {
 draw_rat :: proc() {
 	for ent in entities {
 		rl.DrawCubeWiresV(to_v3(to_visual_world(ent.pos)) + {0.5, 0.5, 0.5}, {1, 1, 1}, ent.color)
-		rl.DrawModel(
+
+		direction: vec3i 
+		rot: f32 
+
+		if len(ent.path) > 0 {
+			rl.DrawCubeWiresV(to_v3(to_visual_world(ent.path[0])) + {0.5, 0.5, 0.5}, {1, 1, 1}, ent.color)
+			direction = (ent.pos - ent.path[0])
+		}
+
+		switch direction {
+			case N:
+				rot = 90 
+
+			case W:
+				rot = 180
+
+			case S: 
+				rot = -90
+
+			case: 
+				rot = 0
+		}
+
+		rl.DrawModelEx(
 				ent.model, 
-				to_v3(to_visual_world(ent.pos)),
-				0.5,
+				to_v3(to_visual_world(ent.pos)) + {0.5, 0, 0.5},
+				{0, 1, 0},
+				rot,
+				1,
 				rl.WHITE
 			)
 	}
 }
 
 update_entity :: proc(ent: ^Entity) {
+	if ent.water > 0 {
+		ent.water -= 10
+	}
+
+	if ent.food > 0 {
+		ent.food -= 10
+	}
+
 	// Task Flow Control
 	if len(ent.tasks) > 0 {
 		execute_task(ent, ent.tasks[0])
 	} else { 
-		return
+		ent.idle_tick_count += 1
+	}
+
+	if ent.idle_tick_count == 3 {
+		add_task(ent, Move_To{rand_(), false, true})
+		ent.idle_tick_count = 0
 	}
 }
 
 set_entity_target_pos :: proc(ent: ^Entity, tar: vec3i) {
 	ent.target_pos = tar
 	ent.path = path(ent.pos, ent.target_pos) 
+	ordered_remove(&ent.path, 0)
 }
 
 walk_entity :: proc(ent: ^Entity) -> bool{
@@ -138,16 +183,36 @@ Task :: union {
 
 Move_To :: struct {
 	target_pos: vec3i,
-	init: bool
+	init: bool,
+	is_auto: bool 
 }
 
 Craft :: struct {
 	name: cstring,
-	init: bool
 }
 
 add_task :: proc(ent: ^Entity, task: Task) {
+	for task in ent.tasks {
+		#partial switch t in task {
+			case Move_To:
+				if t.is_auto {
+					ordered_remove(&ent.tasks, 0)
+					fmt.println("Auto Task Erased")
+				}
+		}
+	}
+
 	append(&ent.tasks, task)
+}
+
+
+init_task :: proc(ent: ^Entity, task: Task) {
+	#partial switch &t in task {
+		case Move_To:
+			ent.target_pos = t.target_pos
+			ent.path = path(ent.pos, ent.target_pos)
+			t.init = true
+	}
 }
 
 execute_task :: proc(ent: ^Entity, task: Task) {
@@ -164,14 +229,5 @@ execute_task :: proc(ent: ^Entity, task: Task) {
 		case Craft: 
 			fmt.println(t.name)
 			ordered_remove(&ent.tasks, 0)
-	}
-}
-
-init_task :: proc(ent: ^Entity, task: Task) {
-	#partial switch &t in task {
-		case Move_To:
-			ent.target_pos = t.target_pos
-			ent.path = path(ent.pos, ent.target_pos)
-			t.init = true
 	}
 }

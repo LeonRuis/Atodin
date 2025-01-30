@@ -19,6 +19,7 @@ camera3: rl.Camera = {
 world_atlas: rl.Texture
 grass_tile: rl.Model
 sand_tile: rl.Model
+water_tile: rl.Model
 wall_tile: rl.Model
 
 rat_blue_model: rl.Model
@@ -52,6 +53,10 @@ main :: proc() {
 	sand_tile.materials[0].maps[0].texture = world_atlas
 	defer rl.UnloadModel(sand_tile)
 
+	water_tile = rl.LoadModel("assets/Water.obj")
+	water_tile.materials[0].maps[0].texture = world_atlas
+	defer rl.UnloadModel(water_tile)
+
 	wall_tile = rl.LoadModel("assets/Log_Wall.obj")
 	wall_tile.materials[0].maps[0].texture = world_atlas
 	defer rl.UnloadModel(wall_tile)
@@ -79,15 +84,13 @@ main :: proc() {
 
 	//##
 	test_init_rats()
+	// init_plant_in_world(&carrot)
+	init_some_plants()
+	// plant_patch_carrot(&carrot_data)
 
 	//##
 
 	for !rl.WindowShouldClose() {
-		if progress_test <= 0 {
-
-		} else {
-			progress_test -= 1
-		}
 		tick += 1
 
 		if tick >= 25 && pause == false{
@@ -118,8 +121,8 @@ main :: proc() {
 			}
 		}
 
-		//// Pause
-		if rl.IsKeyReleased(.SPACE) {
+		// Pause
+		if rl.IsKeyReleased(.R) {
 			pause = !pause 
 		}
 
@@ -137,6 +140,8 @@ main :: proc() {
 				update_mode()
 
 				draw_world_terrain()
+				// Draw plants
+				draw_plants()
 
 				// Draw Walls
 				for key_pos, &cell in world {
@@ -150,7 +155,53 @@ main :: proc() {
 							rl.WHITE)
 					}
 				}
-				
+			
+			//## TEST Circle
+			// circle_center: vec3 = {-20, 2, -20}
+			// radius: f32 = 10 
+
+			// for x in -radius + 1..< radius {
+			// 	for z in -radius + 1..< radius {
+			// 		this_pos: vec3 = {f32(x), 0, f32(z)}
+
+
+			// 		// Verificar si está dentro del círculo
+			// 		if (this_pos.x * this_pos.x + this_pos.z * this_pos.z) <= (radius * radius) {
+			// 			rl.DrawCubeV(
+			// 				(circle_center + this_pos) + {0.5, 0.5, 0.5}, 
+			// 				{1, 1, 1},
+			// 				rl.RED,
+			// 			)		
+			// 		}
+
+			// 		if this_pos + circle_center == circle_center {
+			// 			rl.DrawCubeV(
+			// 				circle_center + {0.5, 0.5, 0.5} , 
+			// 				{1, 1, 1},
+			// 				rl.ORANGE,
+			// 			)		
+			// 		}
+			// 	}
+			// }
+
+			// for x in 0..< radius {
+			// 	for z in 0..< radius {
+			// 		this_pos: vec3 = {f32(x), 0, f32(z)}
+
+			// 		if this_pos == circle_center {
+			// 			continue
+			// 		} 
+
+			// 		rl.DrawCubeV(
+			// 			(circle_center - {3, 1, 3} + this_pos) + {0.5, 0.5, 0.5} , 
+			// 			{1, 1, 1},
+			// 			rl.RED,
+			// 		)		
+			// 	}
+			// }
+
+			//##
+
 			rl.EndMode3D()
 
 				//// GUIS

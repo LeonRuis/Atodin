@@ -11,11 +11,15 @@ Tile :: enum {
 }
 
 CHUNK_SIZE :: vec3i{50, 10, 50}
-seed: i64 // 4 
+seed: i64 = 799
 scale: f64 = 0.01
 
 generate_world_terrain :: proc() {
-	seed = i64(rand.int31())
+	// seed = i64(rand.int31())
+	// temp_seed = i64(rand.int31())
+	// moist_seed = i64(rand.int31())
+
+	// fmt.println(seed, temp_seed, moist_seed)
 	for x in 0..<CHUNK_SIZE.x {
 		for y in 0..<CHUNK_SIZE.y {
 			for z in 0..<CHUNK_SIZE.z {
@@ -26,12 +30,28 @@ generate_world_terrain :: proc() {
 
 				cell_to_draw: bool = (y == max_y) 
 
-				this_terrain_cell: terrain_cell = {
-					grass_tile,
-					y
-				}
+				// Asign tile 
+				temp_value := noise.noise_2d(seed, {f64(x) * scale, f64(z) * scale}) * 100
+				moist_value := noise.noise_2d(seed, {f64(x) * scale, f64(z) * scale}) * 100
+				cell_tile: rl.Model = grass_tile
+
+				if  temp_value > 40 {
+					cell_tile = sand_tile
+				} 
+
+				if moist_value >= 70 {
+					cell_tile = water_tile
+				}	
 
 				if cell_to_draw {
+					this_terrain_cell: terrain_cell = {
+						cell_tile,
+						y,
+
+						int(temp_value),
+						int(moist_value)
+					}
+
 					terrain[{x, z}] = this_terrain_cell
 				}
 			}
@@ -43,7 +63,10 @@ terrain: map[vec2i]terrain_cell
 
 terrain_cell :: struct {
 	tile: rl.Model,
-	floor_height: int
+	floor_height: int,
+
+	temp: int,
+	moist: int,
 }
 
 draw_world_terrain :: proc() {

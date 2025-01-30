@@ -10,7 +10,7 @@ cell :: struct {
 	cells_conected: map[vec3i]bool,
 	position: vec3i,
 	walls: [4]Wall,
-	entity: ^Entity
+	entity: ^Entity,
 }
 
 node :: struct {
@@ -42,14 +42,18 @@ init_world_path :: proc() {
 
 				pos: vec3i = {x, y, z}
 				pos2d: vec2i = {x, z}
-				walk: bool = (pos2d in terrain && terrain[pos2d].floor_height == y)
+				walk: bool = (
+						pos2d in terrain && 
+						terrain[pos2d].floor_height == y && 
+						terrain[pos2d].tile != water_tile
+					)
 
 				world[pos] = {
 					walk,
 					{},
 					pos,
 					{},
-					{}
+					{},
 				}
 			}
 		}

@@ -1,6 +1,7 @@
 package Atalay
 
 import rl "vendor:raylib"
+import fmt "core:fmt"
 
 GameMode :: enum {
 	POINTER,
@@ -15,6 +16,10 @@ in_gui: bool = false
 current_entity: ^Entity = &gray_rat
 pointer_pos: vec3i
 wall_rotation: int = 0
+
+//##
+current_plant: ^Plant_World
+//##
 
 set_mode :: proc(mode: GameMode) {
 	gamemode = mode
@@ -41,6 +46,10 @@ set_mode :: proc(mode: GameMode) {
 			right_click_mode_pos = rl.GetWorldToScreen(to_v3(to_visual_world(pointer_pos)), camera3)
 			rl.SetMousePosition(i32(right_click_mode_pos.x), i32(right_click_mode_pos.y))
 
+			if pointer_pos in plants {
+				current_plant = &plants[pointer_pos]
+			}
+
 			in_gui = true
 
 		case:
@@ -63,11 +72,19 @@ update_mode :: proc() {
 
 ////-----------------------------------------------------------------------------------------------------
 update_pointer_mode :: proc() {
-	// select entity
 	if rl.IsMouseButtonReleased(.LEFT) {
+		// select entity
 		if world[pointer_pos].entity != {} {
 			current_entity = world[pointer_pos].entity 
 		}
+
+		//## Print cell data
+		fmt.println(pointer_pos)
+		fmt.println("Moist:", terrain[{pointer_pos.x, pointer_pos.z}].moist)
+		fmt.println("Temperature:", terrain[{pointer_pos.x, pointer_pos.z}].temp)
+		fmt.println("+++++++++++++++++++++++++++++++++++++++++")
+		//##
+
 	}
 
 	// right click options
