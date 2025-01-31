@@ -85,13 +85,26 @@ menu_right_click :: proc() {
 		{}
 	}
 
+	btn_drink_world: Button = {
+		"Drink From Source",
+		pressed_drink_world,
+		{}
+	}
+
 	menu_buttons: [dynamic]Button
 
 	append(&menu_buttons, btn_move_here)
 
+	// Eat plant
 	if pointer_pos in plants {
 		append(&menu_buttons, btn_eat_plant)
 	} 
+
+	// Drink Source
+	if terrain[{pointer_pos.x, pointer_pos.z}].water_source {
+		append(&menu_buttons, btn_drink_world)
+	} 
+
 
 	control_buttons(&menu_buttons, menu_rect)
 }
@@ -102,7 +115,13 @@ pressed_move_here :: proc() {
 }
 
 pressed_eat_plant :: proc() {
-	fmt.println("eat_plant")
+	add_task(current_entity, Eat_Plant{false, pointer_pos, &plants[pointer_pos]})
+	set_mode(.POINTER)
+}
+
+pressed_drink_world :: proc() {
+	add_task(current_entity, Drink_World{false, pointer_pos})
+	set_mode(.POINTER)
 }
 //-------------------------------------------------------------------------------
 entity_gui :: proc() {
@@ -161,6 +180,12 @@ get_task_title :: proc(task: Task) -> cstring {
 	#partial switch t in task {
 		case Move_To:
 			return "Move To..."
+
+		case Eat_Plant: 
+			return "Eating Plant"
+
+		case Drink_World:
+			return "Drink From Source"
 
 		case: 
 			return "Not Defined Task"

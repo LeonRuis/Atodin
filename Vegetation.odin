@@ -12,13 +12,18 @@ Plant_Data :: struct {
 	max_moist: int,
 
 	color: rl.Color,
-	type: Plant_Types
+	type: Plant_Types,
+
+	calories_per_tic: f32,
+	tics_to_end: int
 }
 
 Plant_World :: struct {
 	grow: int,
 	color: rl.Color,
-	type: Plant_Types
+	
+	calories_per_tic: f32,
+	tics_left: int	
 }
 
 Plant_Types :: enum {
@@ -36,7 +41,10 @@ carrot_data: Plant_Data = {
 	50,
 
 	rl.ORANGE,
-	.CARROT
+	.CARROT,
+
+	100,
+	4
 }
 
 cactus_data: Plant_Data = {
@@ -49,7 +57,10 @@ cactus_data: Plant_Data = {
 	10,
 
 	rl.GREEN,
-	.CACTUS
+	.CACTUS,
+
+	0,
+	10
 }
 
 plants: map[vec3i]Plant_World
@@ -94,9 +105,10 @@ plant_patch_carrot :: proc(plant_data: ^Plant_Data) {
 						if get_validation_plant_in_pos(&carrot_data, this_pos) {
 							if current_count <= group_size {
 								new_plant: Plant_World = {
-								0, 
-								plant_data.color,
-								plant_data.type
+									0, 
+									plant_data.color,
+									plant_data.calories_per_tic,
+									plant_data.tics_to_end
 								}
 
 								plants[this_pos] = new_plant
@@ -148,7 +160,8 @@ init_some_plants :: proc() {
 			new_plant: Plant_World = {
 				0, 
 				plant_data.color,
-				plant_data.type
+				plant_data.calories_per_tic,
+				plant_data.tics_to_end
 			}
 
 			plants[pos] = new_plant

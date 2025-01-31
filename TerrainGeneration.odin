@@ -33,7 +33,10 @@ generate_world_terrain :: proc() {
 				// Asign tile 
 				temp_value := noise.noise_2d(seed, {f64(x) * scale, f64(z) * scale}) * 100
 				moist_value := noise.noise_2d(seed, {f64(x) * scale, f64(z) * scale}) * 100
+
+				water_source: bool	
 				cell_tile: rl.Model = grass_tile
+
 
 				if  temp_value > 40 {
 					cell_tile = sand_tile
@@ -41,6 +44,7 @@ generate_world_terrain :: proc() {
 
 				if moist_value >= 70 {
 					cell_tile = water_tile
+					water_source = true
 				}	
 
 				if cell_to_draw {
@@ -49,7 +53,8 @@ generate_world_terrain :: proc() {
 						y,
 
 						int(temp_value),
-						int(moist_value)
+						int(moist_value),
+						water_source
 					}
 
 					terrain[{x, z}] = this_terrain_cell
@@ -67,6 +72,8 @@ terrain_cell :: struct {
 
 	temp: int,
 	moist: int,
+
+	water_source: bool
 }
 
 draw_world_terrain :: proc() {
