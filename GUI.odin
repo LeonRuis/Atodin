@@ -91,6 +91,12 @@ menu_right_click :: proc() {
 		{}
 	}
 
+	btn_sleep: Button = {
+		"Sleep",
+		pressed_sleep,
+		{}
+	}
+
 	menu_buttons: [dynamic]Button
 
 	append(&menu_buttons, btn_move_here)
@@ -105,6 +111,10 @@ menu_right_click :: proc() {
 		append(&menu_buttons, btn_drink_world)
 	} 
 
+	// Selected entity Options
+	if current_entity.pos == pointer_pos {
+		append(&menu_buttons, btn_sleep)
+	}
 
 	control_buttons(&menu_buttons, menu_rect)
 }
@@ -115,12 +125,17 @@ pressed_move_here :: proc() {
 }
 
 pressed_eat_plant :: proc() {
-	add_task(current_entity, Eat_Plant{false, pointer_pos, &plants[pointer_pos]})
+	add_task(current_entity, Eat_Plant{false, pointer_pos})
 	set_mode(.POINTER)
 }
 
 pressed_drink_world :: proc() {
 	add_task(current_entity, Drink_World{false, pointer_pos})
+	set_mode(.POINTER)
+}
+
+pressed_sleep :: proc() {
+	add_task(current_entity, Sleep{})
 	set_mode(.POINTER)
 }
 //-------------------------------------------------------------------------------
@@ -145,18 +160,26 @@ entity_gui :: proc() {
 		rect.x + rect.width, 
 		rect.y,
 		200,
-		menu_height/2	
+		menu_height/3	
 	}
 
 	food_rect: rl.Rectangle = {
 		rect.x + rect.width, 
-		rect.y + rect.height/2,
+		rect.y + rect.height/3,
 		200,
-		rect.height/2	
+		rect.height/3	
+	}
+
+	sleep_rect: rl.Rectangle = {
+		rect.x + rect.width, 
+		rect.y + rect.height/3 * 2,
+		200,
+		rect.height/3
 	}
 
 	rl.GuiProgressBar(water_rect, "", "Water", &current_entity.water, 0, f32(current_entity.water_max))
 	rl.GuiProgressBar(food_rect, "", "Food", &current_entity.food, 0, f32(current_entity.food_max))
+	rl.GuiProgressBar(sleep_rect, "", "Sleep", &current_entity.sleep, 0, f32(current_entity.sleep_max))
 
 	// Task Buttons
 	btn_task_offset: f32 = 25 
@@ -186,6 +209,9 @@ get_task_title :: proc(task: Task) -> cstring {
 
 		case Drink_World:
 			return "Drink From Source"
+
+		case Sleep: 
+			return "Sleep"
 
 		case: 
 			return "Not Defined Task"

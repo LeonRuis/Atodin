@@ -20,6 +20,9 @@ Entity :: struct {
 	food_max: int,
 	food: f32,
 
+	sleep_max: int,
+	sleep: f32,
+
 	idle_tick_count: int
 }
 
@@ -43,10 +46,13 @@ gray_rat: Entity = {
 	{},
 
 	500,
-	400,
+	100,
 
 	500,
 	400,
+
+	1000,
+	250,
 
 	0
 }
@@ -66,6 +72,9 @@ orange_rat: Entity = {
 
 	400,
 	0,
+
+	1000,
+	800,
 
 	0
 }
@@ -119,7 +128,7 @@ draw_rat :: proc() {
 				to_v3(to_visual_world(ent.pos)) + {0.5, 0, 0.5},
 				{0, 1, 0},
 				rot,
-				1,
+				0.5,
 				rl.WHITE
 			)
 	}
@@ -134,6 +143,10 @@ update_entity :: proc(ent: ^Entity) {
 		ent.food -= 1
 	}
 
+	if ent.sleep > 0 {
+		ent.sleep -= 1
+	}
+
 	// Task Flow Control
 	if len(ent.tasks) > 0 {
 		execute_task(ent, ent.tasks[0])
@@ -144,6 +157,88 @@ update_entity :: proc(ent: ^Entity) {
 	if ent.idle_tick_count == 3 {
 		add_task(ent, Move_To{rand_(), false, true})
 		ent.idle_tick_count = 0
+	}
+
+	// Auto food
+	if ent.food <= f32(ent.food_max) / 3 {
+		// Vision food
+		cost: int = 9999
+		pos: vec3i
+
+		for task in ent.tasks {
+			#partial switch t in task {
+				case Eat_Plant:
+					return	
+			}
+		} 
+
+		for key_pos, plant in plants {
+			current_cost := get_heuclidean(ent.pos, key_pos)
+
+			if current_cost < cost {
+				cost = current_cost
+				pos = key_pos
+			}
+		}
+
+		if cost < 35 {
+			add_task(ent, Eat_Plant{false, pos})
+		}
+	}
+
+	// Auto water
+	dirs: [4]vec3i = {
+		N,
+		S,
+		W,
+		E
+	}
+
+	if ent.water <= f32(ent.water_max) / 3 {
+		// Vision water 
+		cost: int = 9999
+		pos: vec3i
+
+		for task in ent.tasks {
+			#partial switch t in task {
+				case Drink_World:
+					return
+			}
+		} 
+
+		for key_pos, cell in terrain {
+			cell_pos: vec3i = {key_pos.x, cell.floor_height, key_pos.y}
+			current_cost := get_heuclidean(ent.pos, cell_pos)
+
+			if current_cost < 35 && cell.water_source {
+				for dir in neighbor_dirs {
+					this_neighbor := cell_pos + dir
+
+					if !terrain[{this_neighbor.x, this_neighbor.z}].water_source {
+						if current_cost < cost {
+							cost = current_cost
+							pos = cell_pos 
+						}
+					}
+				}
+			}
+		}
+
+		if cost < 35 {
+			add_task(ent, Drink_World{false, pos})
+		}
+	}
+
+	// Auto Sleep
+	for task in ent.tasks {
+		#partial switch t in task {
+			case Sleep:
+				return
+		}
+	} 
+
+	if ent.sleep <= f32(ent.sleep_max) / 4 {
+		add_task(ent, Sleep{})
 	}
 }
 
@@ -185,9 +280,9 @@ walk_entity :: proc(ent: ^Entity) -> bool { // Return true when full path is wal
 //--------------------- Task System -------------------------
 Task :: union {
 	Move_To,
-	Craft,
 	Eat_Plant,
-	Drink_World
+	Drink_World,
+	Sleep
 }
 
 Move_To :: struct {
@@ -199,7 +294,6 @@ Move_To :: struct {
 Eat_Plant :: struct {
 	init: bool,
 	target_pos: vec3i,
-	plant: ^Plant_World,
 }
 
 Drink_World :: struct {
@@ -207,9 +301,8 @@ Drink_World :: struct {
 	target_pos: vec3i
 }
 
-Craft :: struct {
-	name: cstring,
-}
+Sleep :: struct {}
+// sleep cannot be canceled, the entity should be awakened for world activity (loud sounds, other entity, etc)
 
 add_task :: proc(ent: ^Entity, task: Task) {
 	for task in ent.tasks {
@@ -248,8 +341,6 @@ init_task :: proc(ent: ^Entity, task: Task) {
 				adyacent_pos = t.target_pos + E
 			} else if world[t.target_pos + W].walkable{
 				adyacent_pos = t.target_pos + W
-			} else {
-				ordered_remove(&ent.tasks, 0)
 			}
 
 			set_entity_target_pos(ent, adyacent_pos, false)
@@ -274,10 +365,12 @@ execute_task :: proc(ent: ^Entity, task: Task) {
 			}
 
 			if walk_entity(ent) {
-				ent.food += t.plant.calories_per_tic
-				t.plant.tics_left -= 1
+				plant: ^Plant_World = &plants[t.target_pos]
 
-				if t.plant.tics_left == 0 {
+				ent.food += plant.calories_per_tic
+				plant.tics_left -= 1
+
+				if plant.tics_left == 0 {
 					delete_key(&plants, t.target_pos)
 					ordered_remove(&ent.tasks, 0)
 				} else if ent.food > f32(ent.food_max) {
@@ -291,16 +384,21 @@ execute_task :: proc(ent: ^Entity, task: Task) {
 			}
 
 			if walk_entity(ent) {
-				ent.water += 30
+				ent.water += 100
 
 				if ent.water >= f32(ent.water_max) {
 					ordered_remove(&ent.tasks, 0)
 				}
 			}
 
-		case Craft: 
-			fmt.println(t.name)
-			ordered_remove(&ent.tasks, 0)
+		case Sleep:
+			ent.sleep += 10
+
+			if ent.sleep >= f32(ent.sleep_max) {
+				ent.sleep = f32(ent.sleep_max)
+				ordered_remove(&ent.tasks, 0)
+			}
+
 	}
 }
 
