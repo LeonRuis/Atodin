@@ -10,6 +10,7 @@ GameMode :: enum {
 	MOVE_ENTITY,
 	RIGHT_CLICK
 }
+
 gamemode: GameMode = .POINTER
 in_gui: bool = false
 
@@ -78,13 +79,9 @@ update_pointer_mode :: proc() {
 			current_entity = world[pointer_pos].entity 
 		}
 
-		//## Print cell data
-		fmt.println(pointer_pos)
-		fmt.println("Moist:", terrain[{pointer_pos.x, pointer_pos.z}].moist)
-		fmt.println("Temperature:", terrain[{pointer_pos.x, pointer_pos.z}].temp)
-		fmt.println("+++++++++++++++++++++++++++++++++++++++++")
-		//##
-
+		if pointer_pos in plants {
+			fmt.println(plants[pointer_pos])
+		}
 	}
 
 	// right click options

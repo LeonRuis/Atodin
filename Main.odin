@@ -17,6 +17,7 @@ camera3: rl.Camera = {
 }
 
 world_atlas: rl.Texture
+
 grass_tile: rl.Model
 sand_tile: rl.Model
 water_tile: rl.Model
@@ -27,6 +28,9 @@ rat_orange_model: rl.Model
 
 rat_blue_texture: rl.Texture
 rat_orange_texture: rl.Texture
+
+carrots_model: rl.Model
+carrots_texture: rl.Texture
 
 Wall :: struct {
 	model: rl.Model,
@@ -61,6 +65,12 @@ main :: proc() {
 	wall_tile.materials[0].maps[0].texture = world_atlas
 	defer rl.UnloadModel(wall_tile)
 
+	carrots_texture = rl.LoadTexture("assets/Carrots.png")
+	carrots_model = rl.LoadModel("assets/Carrots.obj")
+	carrots_model.materials[0].maps[0].texture = carrots_texture
+	defer rl.UnloadTexture(carrots_texture)
+	defer rl.UnloadModel(carrots_model)
+
 	rat_blue_texture = rl.LoadTexture("assets/Rat_1.png")
 	rat_blue_model = rl.LoadModel("assets/Rat.obj")
 	rat_blue_model.materials[0].maps[0].texture = rat_blue_texture
@@ -79,9 +89,6 @@ main :: proc() {
 
 	rl.SetTargetFPS(60)
 
-	tick: int = 0
-	pause: bool = false
-
 	//##
 	test_init_rats()
 	// init_plant_in_world(&carrot)
@@ -91,13 +98,14 @@ main :: proc() {
 	//##
 
 	for !rl.WindowShouldClose() {
-		tick += 1
 
-		if tick >= 25 && pause == false{
+		if tick >= 25 {
 			tick = 0
 			for ent in entities {
 				update_entity(ent)
 			}
+
+			update_plants()
 		}		
 
 		if !in_gui {
@@ -119,11 +127,6 @@ main :: proc() {
 			if gamemode == .RIGHT_CLICK {
 				set_mode(.POINTER)
 			}
-		}
-
-		// Pause
-		if rl.IsKeyReleased(.R) {
-			pause = !pause 
 		}
 
 		rl.BeginDrawing()
@@ -216,6 +219,7 @@ main :: proc() {
 			rl.DrawFPS(0, 0)
 
 			entity_gui()
+			speed_gui()
 
 		rl.EndDrawing()
 	}

@@ -218,6 +218,56 @@ get_task_title :: proc(task: Task) -> cstring {
 	}
 }
 
+//---------------- Other guis -------------------------------------
+tick: int = 0
+a: i32 = 1
+
+speed_gui :: proc() {
+	rect: rl.Rectangle = {
+		WINDOW_WIDTH - 100 * 4,
+		WINDOW_HEIGHT - 20, 
+		100,
+		20
+	}
+
+	// Speed by GUI
+	rl.GuiToggleGroup(rect, "Pause;Normal;Fast;Forward", &a)
+
+	// Speed by Input
+	if rl.IsKeyReleased(.R) {
+		if a == 0 {
+			a = 1	
+		} else {
+			a = 0
+		}
+	} else if rl.IsKeyReleased(.ONE) {
+		a = 1
+	} else if rl.IsKeyReleased(.TWO) {
+		a = 2
+	} else if rl.IsKeyReleased(.THREE) {
+		a = 3
+	}
+
+	// Speed Control
+	switch a {
+		case 0: 
+			return
+
+		case 1:
+			tick += 1
+
+		case 2:
+			tick += 2
+
+		case 3:
+			tick += 5
+
+		case:	
+			fmt.println("No Speed Defined")
+			tick += 0 
+	}
+}
+
 //---------------- Tools -------------------------------------
 control_buttons :: proc(buttons: ^$T, menu_rect: rl.Rectangle) {
 	btn_size_x: f32 = menu_rect.width

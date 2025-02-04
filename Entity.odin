@@ -79,10 +79,10 @@ orange_rat: Entity = {
 	0
 }
 
-entities: [2]^Entity
+entities: [dynamic]^Entity
 
 test_init_rats :: proc() {
-	gray_rat.pos = {0, 1, 0} //rand_()
+	gray_rat.pos = rand_()
 	cell := &world[gray_rat.pos] 
 	cell.entity = &gray_rat
 
@@ -93,8 +93,8 @@ test_init_rats :: proc() {
 	gray_rat.model = rat_blue_model
 	orange_rat.model = rat_orange_model 
 
-	entities[0] = &gray_rat
-	entities[1] = &orange_rat 
+	append(&entities, &gray_rat)
+	append(&entities, &orange_rat)
 }
 
 draw_rat :: proc() {
@@ -172,7 +172,7 @@ update_entity :: proc(ent: ^Entity) {
 			}
 		} 
 
-		for key_pos, plant in plants {
+		for key_pos in edible_plants {
 			current_cost := get_heuclidean(ent.pos, key_pos)
 
 			if current_cost < cost {
@@ -365,15 +365,23 @@ execute_task :: proc(ent: ^Entity, task: Task) {
 			}
 
 			if walk_entity(ent) {
+				// Eat Plant
 				plant: ^Plant_World = &plants[t.target_pos]
 
-				ent.food += plant.calories_per_tic
-				plant.tics_left -= 1
+				plant.calories -= 200
 
-				if plant.tics_left == 0 {
+				if plant.calories == 0 {
+					for ed_plnt, i in edible_plants {
+						unordered_remove(&edible_plants, i)
+					}
 					delete_key(&plants, t.target_pos)
 					ordered_remove(&ent.tasks, 0)
+
 				} else if ent.food > f32(ent.food_max) {
+					for ed_plnt, i in edible_plants {
+						unordered_remove(&edible_plants, i)
+					}
+
 					ordered_remove(&ent.tasks, 0)
 				}
 			}
