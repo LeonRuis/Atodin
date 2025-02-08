@@ -140,7 +140,7 @@ update_entity :: proc(ent: ^Entity) {
 	}
 
 	if ent.food > 0 {
-		ent.food -= 1
+		ent.food -= 1 
 	}
 
 	if ent.sleep > 0 {
@@ -366,22 +366,21 @@ execute_task :: proc(ent: ^Entity, task: Task) {
 
 			if walk_entity(ent) {
 				// Eat Plant
+				if t.target_pos not_in plants {
+					ordered_remove(&ent.tasks, 0)
+					return
+				}
+
 				plant: ^Plant_World = &plants[t.target_pos]
 
 				plant.calories -= 200
+				ent.food += 200
 
 				if plant.calories == 0 {
-					for ed_plnt, i in edible_plants {
-						unordered_remove(&edible_plants, i)
-					}
-					delete_key(&plants, t.target_pos)
+					delete_plant_world(t.target_pos)
 					ordered_remove(&ent.tasks, 0)
 
 				} else if ent.food > f32(ent.food_max) {
-					for ed_plnt, i in edible_plants {
-						unordered_remove(&edible_plants, i)
-					}
-
 					ordered_remove(&ent.tasks, 0)
 				}
 			}

@@ -109,10 +109,22 @@ main :: proc() {
 		}		
 
 		if !in_gui {
-			rl.UpdateCamera(&camera3, .FREE)
+			if gamemode == .FOCUS_ENTITY {
+				rl.UpdateCamera(&camera3, .THIRD_PERSON)
+				camera3.target = to_v3(current_entity.pos)
+			} else {
+				rl.UpdateCamera(&camera3, .FREE)
+			}
 		}
 
 			//// Inputs
+		if rl.IsKeyReleased(.F) {
+			if gamemode == .POINTER {
+				set_mode(.FOCUS_ENTITY)
+			} else if gamemode == .FOCUS_ENTITY {
+				set_mode(.POINTER)
+			}
+		}
 
 		//// Gui Modes 
 		if rl.IsKeyReleased(.TAB) {
@@ -136,7 +148,6 @@ main :: proc() {
 				//##
 				draw_rat()
 				//##
-
 				update_pointer()
 
 					//// Modes Update
@@ -163,29 +174,23 @@ main :: proc() {
 			// circle_center: vec3 = {-20, 2, -20}
 			// radius: f32 = 10 
 
-			// for x in -radius + 1..< radius {
-			// 	for z in -radius + 1..< radius {
-			// 		this_pos: vec3 = {f32(x), 0, f32(z)}
+			// for r in 0..<radius {
+			//     for x in -r + 1..<r {
+			//         for z in -r + 1..<r {
+			//             this_pos: vec3 = {f32(x), 0, f32(z)}
 
-
-			// 		// Verificar si está dentro del círculo
-			// 		if (this_pos.x * this_pos.x + this_pos.z * this_pos.z) <= (radius * radius) {
-			// 			rl.DrawCubeV(
-			// 				(circle_center + this_pos) + {0.5, 0.5, 0.5}, 
-			// 				{1, 1, 1},
-			// 				rl.RED,
-			// 			)		
-			// 		}
-
-			// 		if this_pos + circle_center == circle_center {
-			// 			rl.DrawCubeV(
-			// 				circle_center + {0.5, 0.5, 0.5} , 
-			// 				{1, 1, 1},
-			// 				rl.ORANGE,
-			// 			)		
-			// 		}
-			// 	}
+			//             // Verificar si está dentro del círculo
+			//             if (this_pos.x * this_pos.x + this_pos.z * this_pos.z) <= (r * r) {
+			//                 rl.DrawCubeV(
+			//                     (circle_center + this_pos) + {0.5, 0.5, 0.5}, 
+			//                     {1, 1, 1},
+			//                     rl.RED,
+			//                 )		
+			//             }
+			//         }
+			//     }
 			// }
+	
 
 			// for x in 0..< radius {
 			// 	for z in 0..< radius {

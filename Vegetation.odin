@@ -19,7 +19,9 @@ Plant_Data :: struct {
 Plant_World :: struct {
 	grow: int,
 	calories: int,
-	data: Plant_Data
+	seeding: bool,
+
+	data: Plant_Data,
 }
 
 carrot_data: Plant_Data = {
@@ -39,51 +41,58 @@ carrot_data: Plant_Data = {
 plants: map[vec3i]Plant_World
 edible_plants: [dynamic]vec3i
 
+// Directions for seeding 
+seeding_dirs: [8]vec3i = {
+	N + E,
+	N + W,
+	N,
+
+	S + E,
+	S + W,
+	S,
+
+	E,
+	W
+}
+
 update_plants :: proc() {
 	for key_pos, &plant in plants {
 		plant.grow += 1 
 
 		if plant.grow > 0 && plant.grow < 100 {
-			fmt.println("Seed state")
+			// fmt.println("Seed state")
 		} else if plant.grow > 100 && plant.grow < 200 {
-			fmt.println("Sprout State")
-		} else if plant.grow >= 200 && plant.grow < 500 {
-			fmt.println("Veggie State")
+			// fmt.println("Sprout State")
+		} else if plant.grow >= 200 && plant.grow < 300 {
+			// fmt.println("Veggie State")
 			if plant.grow == 200 {
 				append(&edible_plants, key_pos)
 			}
-		} else if plant.grow > 500 && plant.grow < plant.data.max_grow {
-			fmt.println("Seeding State")
+		} else if plant.grow > 300 && plant.grow < plant.data.max_grow {
+			if plant.grow == 301 {
+				plant.seeding = true
+			}
+
+			// fmt.println("Seeding State")
+			for dir in seeding_dirs {
+				this_pos := key_pos + dir
+				this_pos_2d: vec2i = {this_pos.x, this_pos.z}
+
+				if this_pos_2d in terrain && this_pos not_in plants && plant.seeding && get_validation_plant_in_pos(plant.data, this_pos) {
+					plant.seeding = false
+					patch_behavior(this_pos, plant.data, 5)
+					// create_plant_world(this_pos, plant.data)
+					fmt.println("Vegetation/85: Planted")
+					return
+				}
+			}
+		} else if plant.grow > plant.data.max_grow{
+			delete_plant_world(key_pos)
 		}
-
-		// switch plant.grow {
-		// 	case plant.grow < 100:
-		// 		fmt.println("Seed state")
-
-		// 	case plant.grow < 200:
-		// 		fmt.println("Sprout State")
-
-		// 	case plant.grow < 300: 
-		// 		fmt.println("Veggie State")
-
-		// 		if plant.grow == 299 {
-		// 			append(&edible_plants, key_pos)
-		// 		}
-
-		// 	case plant.grow < 500: 
-		// 		fmt.println("Seeding State")
-
-		// 	case plant.grow > plant.data.max_grow: 
-		// 		fmt.println("Plant Dead")
-		// 		delete_key(&plants, key_pos)
-		// 		for ed_plnt, i in edible_plants {
-		// 			unordered_remove(&edible_plants, i)
-		// 		}
-		// }
 	}
 }
 
-repel_plant_cactus :: proc(radius: f32, plant_pos: vec3i) -> bool {
+repel_plant :: proc(radius: f32, plant_pos: vec3i) -> bool {
 	circle_center: vec3 = to_v3(plant_pos) 
 
 	for x in -radius + 1..< radius {
@@ -102,43 +111,86 @@ repel_plant_cactus :: proc(radius: f32, plant_pos: vec3i) -> bool {
 	return true
 }
 
-// plant_patch_carrot :: proc(plant_data: ^Plant_Data) {
-// 	group_size: int = 4
-// 	current_count: int = 0
-// 	radius: f32 = 4
+patch_behavior :: proc(center: vec3i, p_data: Plant_Data, limit: int) {
+	if center in plants || !get_validation_plant_in_pos(p_data, center) {
+		fmt.println("not_valid")
+		return
+	}
 
-// 	for key_pos, cell in terrain {
-// 		for x in -radius + 1..< radius {
-// 			for z in -radius + 1..< radius {
-// 				radius_pos: vec3 = {f32(x), 0, f32(z)}
-// 				this_pos: vec3i = {int(x), 0, int(z)} + {key_pos.x, cell.floor_height, key_pos.y} 
+	// patch repel radius
+	// patch plant radius
+	visited_pos: map[vec3i]bool
 
-// 				if (radius_pos.x * radius_pos.x + radius_pos.z * radius_pos.z) <= (radius * radius) {
-// 					if this_pos in world && {this_pos.x, this_pos.z} in terrain && this_pos not_in plants {
-// 						if get_validation_plant_in_pos(&carrot_data, this_pos) {
-// 							if current_count <= group_size {
-// 								new_plant: Plant_World = {
-// 									0, 
-// 									plant_data.model,
-// 									plant_data.calories_per_tic,
-// 									plant_data.tics_to_end
-// 								}
+	repel_radius: f32 = 25
+	plant_radius: f32 =	7 
 
-// 								plants[this_pos] = new_plant
+	patch_limit: int = limit // if want 3, place a 4
 
-// 								current_count += 1
-// 							} else {
-// 								return
-// 							}
-// 						}
-// 					}
-// 				}
-// 			}
-// 		}
-// 	}
-// }
+	count: int = 0
 
-get_validation_plant_in_pos :: proc(plant_data: ^Plant_Data, pos: vec3i) -> bool {
+	for r in 0..<repel_radius {
+		for x in -r + 1..< r {
+			for z in -r + 1..< r {
+				radius_pos: vec3 = {f32(x), 0, f32(z)}
+				this_pos: vec3i = {int(x), 0, int(z)} + center 
+
+				if (radius_pos.x * radius_pos.x + radius_pos.z * radius_pos.z) <= (r * r) {
+					if this_pos == center || this_pos in visited_pos {
+						continue
+					}
+
+					visited_pos[this_pos] = true
+
+					if this_pos in plants {
+						count += 1
+						fmt.println(this_pos)
+					}
+
+					if count >= patch_limit {
+						fmt.println(count)
+						return
+					}
+				}
+			}
+		}
+	}
+
+	create_plant_world(center, p_data)
+	count += 1
+
+	for r in 0..<plant_radius {
+		for x in -r + 1..< r {
+			for z in -r + 1..< r {
+				radius_pos: vec3 = {f32(x), 0, f32(z)}
+				this_pos: vec3i = {int(x), 0, int(z)} + center 
+
+				if (radius_pos.x * radius_pos.x + radius_pos.z * radius_pos.z) <= (r * r) {
+					if this_pos == center {
+						continue
+					}
+
+					if count >= patch_limit {
+						fmt.println(count)
+						return
+					}
+
+					if get_validation_plant_in_pos(p_data, this_pos) {
+						count += 1
+						create_plant_world(this_pos, p_data)
+					}
+				}
+			}
+		}
+	}
+}
+
+
+get_validation_plant_in_pos :: proc(plant_data: Plant_Data, pos: vec3i) -> bool {
+	pos2d: vec2i = {pos.x, pos.z}
+	if pos2d not_in terrain {
+		return false
+	}
+
 	temp: bool = false
 	moist: bool = false
 
@@ -161,24 +213,21 @@ get_validation_plant_in_pos :: proc(plant_data: ^Plant_Data, pos: vec3i) -> bool
 
 // init plants in world
 init_some_plants :: proc() {
-	// plants_to_init: int = 1	
+	//  Init Plants Datas Models
 	carrot_data.model = carrots_model
+
+	positions: int = 1
+	count: int = 0
 
 	plant_data: Plant_Data = carrot_data
 
 	for key_pos, cell in terrain {
 		pos: vec3i = {key_pos.x, cell.floor_height, key_pos.y}
 
-		no_plant := repel_plant_cactus(35, pos)
+		if get_validation_plant_in_pos(plant_data, pos) && count < positions{
 
-		if get_validation_plant_in_pos(&plant_data, pos) && no_plant{
-			new_plant: Plant_World = {
-				0, 
-				1000,
-				plant_data
-			}
-
-			plants[pos] = new_plant
+			patch_behavior(pos, plant_data, 3)
+			count += 1
 		}
 	}	
 }
@@ -198,37 +247,25 @@ draw_plants :: proc() {
 	}
 }
 
-// la funcion no tiene un buen nombre
-// init_plant_in_world :: proc(plant: ^Plant) {
-// 	for key_pos, cell in terrain {
-// 		temp: bool = false
-// 		moist: bool = false
+// --------------- Plant Actions ----------------------------
+delete_plant_world :: proc(pos: vec3i) {
+	delete_key(&plants, pos)
 
-// 		if cell.temp > plant.min_temp && cell.temp < plant.max_temp {
-// 			temp = true
-// 		}
-
-// 		if cell.moist > plant.min_moist && cell.moist < plant.max_moist {
-// 			moist = true
-// 		}
-
-// 		if temp && moist {
-// 			plants[{key_pos.x, cell.floor_height, key_pos.y}] = 1
-// 		}
-// 	}
-// }
-
-// draw_plants :: proc() {
-// 	for key_pos, value in plants {
-
-// 		if value == 1 {
-// 			rl.DrawCubeV(
-// 				to_v3(to_visual_world(key_pos)) + {0.5, 0.5, 0.5} , 
-// 				{1, 1, 1},
-// 				rl.ORANGE
-// 				)	
-// 		}
-// 	}
-// }
+	for ed_plnt, i in edible_plants {
+		if ed_plnt == pos {
+			unordered_remove(&edible_plants, i)
+		}
+	}
+}
 
 
+create_plant_world :: proc(pos: vec3i, plant_data: Plant_Data) {
+	new_plant: Plant_World = {
+		grow = 0, 
+		calories = 1000,
+		seeding = false,
+		data = plant_data
+	}
+
+	plants[pos] = new_plant
+}

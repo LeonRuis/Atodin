@@ -7,7 +7,7 @@ GameMode :: enum {
 	POINTER,
 	GUI,
 	WALL_PLACE,
-	MOVE_ENTITY,
+	FOCUS_ENTITY,
 	RIGHT_CLICK
 }
 
@@ -38,10 +38,6 @@ set_mode :: proc(mode: GameMode) {
 			rl.DisableCursor()
 			in_gui = false 
 
-		case .MOVE_ENTITY:
-			rl.DisableCursor()
-			in_gui = false 
-
 		case .RIGHT_CLICK:
 			rl.EnableCursor()
 			right_click_mode_pos = rl.GetWorldToScreen(to_v3(to_visual_world(pointer_pos)), camera3)
@@ -52,6 +48,11 @@ set_mode :: proc(mode: GameMode) {
 			}
 
 			in_gui = true
+
+		case .FOCUS_ENTITY:
+			rl.DisableCursor()
+
+			in_gui = false 
 
 		case:
 			return
@@ -65,6 +66,9 @@ update_mode :: proc() {
 
 		case .WALL_PLACE:
 			update_wall_place_mode()
+
+		case .FOCUS_ENTITY:
+			return
 
 		case:
 			return
@@ -82,6 +86,9 @@ update_pointer_mode :: proc() {
 		if pointer_pos in plants {
 			fmt.println(plants[pointer_pos])
 		}
+
+		fmt.println("Game/line 90:", pointer_pos)
+		fmt.println("Game/line 91:", get_validation_plant_in_pos(carrot_data, pointer_pos))
 	}
 
 	// right click options
