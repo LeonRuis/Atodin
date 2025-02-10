@@ -106,6 +106,7 @@ main :: proc() {
 			}
 
 			update_plants()
+			update_time()
 		}		
 
 		if !in_gui {
@@ -220,6 +221,8 @@ main :: proc() {
 			if gamemode == .RIGHT_CLICK {
 				menu_right_click()
 			}
+
+			draw_time()
 
 			rl.DrawFPS(0, 0)
 

@@ -260,7 +260,7 @@ speed_gui :: proc() {
 			tick += 2
 
 		case 3:
-			tick += 5
+			tick += 5 
 
 		case:	
 			fmt.println("No Speed Defined")
