@@ -2,10 +2,17 @@ package Atalay
 
 import rl "vendor:raylib"
 import fmt "core:fmt"
+import strings "core:strings"
+import strconv "core:strconv"
 
 Button :: struct {
 	title: cstring,
 	action: proc(),
+	rect: rl.Rectangle
+}
+
+Label :: struct {
+	text: cstring,
 	rect: rl.Rectangle
 }
 
@@ -97,12 +104,19 @@ menu_right_click :: proc() {
 		{}
 	}
 
+	btn_positive_social: Button = {
+		"Social +",
+		pressed_positive_social,
+		{}
+	}
+
+
 	menu_buttons: [dynamic]Button
 
 	append(&menu_buttons, btn_move_here)
 
 	// Eat plant
-	if pointer_pos in plants {
+	if pointer_pos in plants && plants[pointer_pos].grow >= 200 {
 		append(&menu_buttons, btn_eat_plant)
 	} 
 
@@ -112,7 +126,7 @@ menu_right_click :: proc() {
 	} 
 
 	// Selected entity Options
-	if current_entity.pos == pointer_pos {
+	if get_entity().pos == pointer_pos {
 		append(&menu_buttons, btn_sleep)
 	}
 
@@ -120,30 +134,91 @@ menu_right_click :: proc() {
 }
 
 pressed_move_here :: proc() {
-	add_task(current_entity, Move_To{pointer_pos, false, false})
+	add_task(get_entity(), Move_To{pointer_pos, false, false})
 	set_mode(.POINTER)
 }
 
 pressed_eat_plant :: proc() {
-	add_task(current_entity, Eat_Plant{false, pointer_pos})
+	add_task(get_entity(), Eat_Plant{false, pointer_pos})
 	set_mode(.POINTER)
 }
 
 pressed_drink_world :: proc() {
-	add_task(current_entity, Drink_World{false, pointer_pos})
+	add_task(get_entity(), Drink_World{false, pointer_pos})
 	set_mode(.POINTER)
 }
 
 pressed_sleep :: proc() {
-	add_task(current_entity, Sleep{})
+	add_task(get_entity(), Sleep{})
+	set_mode(.POINTER)
+}
+
+pressed_positive_social :: proc() {
+	fmt.println("Positive")
 	set_mode(.POINTER)
 }
 //-------------------------------------------------------------------------------
 entity_gui :: proc() {
+	// Data Display
+	menu_data_width: f32 = 200
+	menu_data_height: f32 = 200
+
+	menu_data_x: f32 = 0
+	menu_data_y: f32 = WINDOW_HEIGHT - menu_data_height
+
+	menu_data_rect: rl.Rectangle = {
+		menu_data_x, 
+		menu_data_y,
+		menu_data_width,
+		menu_data_height
+	}
+
+	labels: [dynamic]Label
+
+	gender: string
+	switch get_entity().gender {
+		case true:
+			gender = "Male"
+
+		case:
+			gender = "Female"
+	}
+
+	gender_string: string = strings.concatenate({"Gender: ", gender})
+	gender_text: cstring = strings.clone_to_cstring(gender_string)
+
+	label_gender: Label = {
+		gender_text,
+		{}
+	}
+
+	dob_string: string = strings.concatenate({"Date of Bird: ", date_to_string(get_entity().dob)})
+	dob_text: cstring = strings.clone_to_cstring(dob_string)
+	label_dob: Label = { // DOB = Date of Bird
+		dob_text,
+		{}
+	}
+
+	age_text: cstring = strings.clone_to_cstring(get_age(get_entity().age))
+
+	label_age: Label = { 
+		age_text,
+		{}
+	}
+
+	append(&labels, label_gender)
+	append(&labels, label_dob)
+	append(&labels, label_age)
+
+	rl.GuiPanel(menu_data_rect, get_entity().name)
+
+	control_labels(&labels, menu_data_rect)
+
+	// Tasks
 	menu_width: f32 = 100
 	menu_height: f32 = 100
 
-	menu_x: f32 = 0
+	menu_x: f32 = menu_data_width 
 	menu_y: f32 = WINDOW_HEIGHT - menu_height
 
 	rect: rl.Rectangle = {
@@ -153,7 +228,7 @@ entity_gui :: proc() {
 		menu_height	
 	}
 
-	rl.GuiPanel(rect, current_entity.name)
+	rl.GuiPanel(rect, "Tasks")
 
 	// Needs
 	water_rect: rl.Rectangle = {
@@ -177,13 +252,13 @@ entity_gui :: proc() {
 		rect.height/3
 	}
 
-	rl.GuiProgressBar(water_rect, "", "Water", &current_entity.water, 0, f32(current_entity.water_max))
-	rl.GuiProgressBar(food_rect, "", "Food", &current_entity.food, 0, f32(current_entity.food_max))
-	rl.GuiProgressBar(sleep_rect, "", "Sleep", &current_entity.sleep, 0, f32(current_entity.sleep_max))
+	rl.GuiProgressBar(water_rect, "", "Water", &get_entity().water, 0, f32(get_entity().water_max))
+	rl.GuiProgressBar(food_rect, "", "Food", &get_entity().food, 0, f32(get_entity().food_max))
+	rl.GuiProgressBar(sleep_rect, "", "Sleep", &get_entity().sleep, 0, f32(get_entity().sleep_max))
 
 	// Task Buttons
 	btn_task_offset: f32 = 25 
-	for task, i in current_entity.tasks {
+	for task, i in get_entity().tasks {
 		btn_rect: rl.Rectangle = {
 			menu_x,
 			menu_y + btn_task_offset,
@@ -192,7 +267,7 @@ entity_gui :: proc() {
 		} 
 		
 		if rl.GuiButton(btn_rect, get_task_title(task)) {
-			ordered_remove(&current_entity.tasks, i)
+			ordered_remove(&get_entity().tasks, i)
 		}		
 	
 		btn_task_offset += 30
@@ -234,7 +309,7 @@ speed_gui :: proc() {
 	rl.GuiToggleGroup(rect, "Pause;Normal;Fast;Forward", &a)
 
 	// Speed by Input
-	if rl.IsKeyReleased(.R) {
+	if rl.IsKeyReleased(.G) {
 		if a == 0 {
 			a = 1	
 		} else {
@@ -288,5 +363,24 @@ control_buttons :: proc(buttons: ^$T, menu_rect: rl.Rectangle) {
 		}
 
 		btn_y_offset += btn_size_y
+	}
+}
+
+control_labels :: proc(labels: ^$T, menu_rect: rl.Rectangle) {
+	label_width: f32 = menu_rect.width
+	label_height: f32 = 30
+
+	label_y_offset: f32 = 25
+
+	for label in labels {
+		new_rect: rl.Rectangle = {
+			menu_rect.x,
+			menu_rect.y + label_y_offset,
+			label_width,
+			label_height
+		}
+
+		rl.GuiLabel(new_rect, label.text)
+		label_y_offset += label_height
 	}
 }

@@ -3,6 +3,8 @@ package Atalay
 import rl "vendor:raylib"
 import fmt "core:fmt"
 import rand "core:math/rand"
+import strconv "core:strconv"
+import strings "core:strings"
 
 Entity :: struct {
 	pos: vec3i,
@@ -23,8 +25,16 @@ Entity :: struct {
 	sleep_max: int,
 	sleep: f32,
 
-	idle_tick_count: int
+	idle_tick_count: int,
+
+	gender: bool, // false = female, true = male
+	dob: Time,
+	age: Time,
+
+	id: int,
 }
+
+entities: map[int]Entity
 
 //##
 rand_ :: proc() -> vec3i {
@@ -35,70 +45,13 @@ rand_ :: proc() -> vec3i {
 	return {int(x), int(y), int(z)}
 }
 
-gray_rat: Entity = {
-	{0, 0, 0},
-	{0, 0, 0},
-	{},
-	rl.LIGHTGRAY,
-
-	"Gray Rat",
-	{},
-	{},
-
-	500,
-	100,
-
-	500,
-	400,
-
-	1000,
-	250,
-
-	0
-}
-
-orange_rat: Entity = {
-	{0, 0, 0},
-	{0, 0, 0},
-	{},
-	rl.MAROON,
-
-	"Orange",
-	{},
-	{},
-
-	500,
-	400,
-
-	400,
-	0,
-
-	1000,
-	800,
-
-	0
-}
-
-entities: [dynamic]^Entity
-
 test_init_rats :: proc() {
-	gray_rat.pos = rand_()
-	cell := &world[gray_rat.pos] 
-	cell.entity = &gray_rat
-
-	orange_rat.pos = rand_()
-	cell = &world[orange_rat.pos] 
-	cell.entity = &orange_rat
-
-	gray_rat.model = rat_blue_model
-	orange_rat.model = rat_orange_model 
-
-	append(&entities, &gray_rat)
-	append(&entities, &orange_rat)
+	spawn_entity(rand_(), true, rl.BLUE, rat_blue_model, "Blue Rat")
+	spawn_entity(rand_(), false, rl.ORANGE, rat_orange_model, "Orange Rat")
 }
 
 draw_rat :: proc() {
-	for ent in entities {
+	for id, ent in entities {
 		rl.DrawCubeWiresV(to_v3(to_visual_world(ent.pos)) + {0.5, 0.5, 0.5}, {1, 1, 1}, ent.color)
 
 		direction: vec3i 
@@ -134,7 +87,27 @@ draw_rat :: proc() {
 	}
 }
 
+update_entities :: proc() {
+	for id, &ent in entities {
+		update_entity(&ent)
+	}	
+}
+
 update_entity :: proc(ent: ^Entity) {
+	//#
+	ent.age = calculate_age(ent.dob)
+	//#
+
+		// Deaths
+	// Age
+	if ent.age[5] >= 1 {
+		despawn_entity(ent)
+	}
+
+	if ent.water == 0 || ent.food == 0 || ent.sleep == 0 { // Me gustaria hacer algo mas interesante con las entidades cuando sleep llegue a 0
+		despawn_entity(ent)
+	}
+
 	if ent.water > 0 {
 		ent.water -= 1
 	}
@@ -161,6 +134,7 @@ update_entity :: proc(ent: ^Entity) {
 
 	// Auto food
 	if ent.food <= f32(ent.food_max) / 3 {
+
 		// Vision food
 		cost: int = 9999
 		pos: vec3i
@@ -181,7 +155,7 @@ update_entity :: proc(ent: ^Entity) {
 			}
 		}
 
-		if cost < 35 {
+		if cost < 50 {
 			add_task(ent, Eat_Plant{false, pos})
 		}
 	}
@@ -265,13 +239,11 @@ walk_entity :: proc(ent: ^Entity) -> bool { // Return true when full path is wal
 		return true 
 	} 
 
-	cell := &world[ent.pos] 
-	cell.entity = {}
+	control_entity_exit_pos(ent)
 
 	ent.pos = ent.path[0]
 
-	cell = &world[ent.pos] 
-	cell.entity = ent
+	control_entity_enter_pos(ent)
 
 	ordered_remove(&ent.path, 0)
 	return false 
@@ -409,3 +381,125 @@ execute_task :: proc(ent: ^Entity, task: Task) {
 	}
 }
 
+// --------------------------------------------------------------------------
+spawn_entity :: proc(pos: vec3i, gender: bool, color: rl.Color, model:rl.Model, name: cstring) {
+	new_entity: Entity = {
+		pos = pos,
+		target_pos = {0, 0, 0},
+		path = {},
+		color = color,
+
+		name = name,
+		model = model, 
+		tasks = {},
+
+		water_max = 500,
+		water = 100,
+
+		food_max = 500,
+		food = 100,
+
+		sleep_max = 1000,
+		sleep = 999,
+
+		idle_tick_count = 0,
+
+		gender = gender,
+		dob = {hour, min, sec, day, month, year},
+		age = {0, 0, 0, 0, 0, 0},
+
+		id = get_valid_entitie_id()
+	}
+
+	control_entity_enter_pos(&new_entity)
+
+	entities[new_entity.id] = new_entity
+}
+
+valid_id: int = -1
+get_valid_entitie_id :: proc() -> int {
+	valid_id += 1
+	return valid_id
+}
+
+get_entity :: proc() -> ^Entity {
+	return &entities[current_entity]
+}
+
+despawn_entity :: proc(ent: ^Entity) {
+	spawn_entity(rand_(), true, rl.BLUE, rat_blue_model, "Blue Rat")
+
+	control_entity_exit_pos(ent)
+	delete_key(&entities, ent.id)
+
+	if current_entity == ent.id {
+		current_entity = -1 
+	}
+}
+///
+
+Time :: [6]int // Indexes: 0 Hours, 1 Mins, 2 Secs, 3 Day, 4 Month, 5 Year
+
+calculate_age :: proc(birth: [6]int) -> [6]int {
+    age: [6]int
+    carry: int = 0
+
+    if sec >= birth[2] {
+        age[2] = sec - birth[2]
+    } else {
+        age[2] = (sec + 60) - birth[2]
+        carry = 1
+    }
+
+    if (min - carry) >= birth[1] {
+        age[1] = (min - carry) - birth[1]
+        carry = 0
+    } else {
+        age[1] = ((min - carry) + 60) - birth[1]
+        carry = 1
+    }
+
+    if (hour - carry) >= birth[0] {
+        age[0] = (hour - carry) - birth[0]
+        carry = 0
+    } else {
+        age[0] = ((hour - carry) + 24) - birth[0]
+        carry = 1
+    }
+
+    if (day - carry) >= birth[3] {
+        age[3] = (day - carry) - birth[3]
+        carry = 0
+    } else {
+        age[3] = ((day - carry) + 30) - birth[3]
+        carry = 1
+    }
+
+    if (month - carry) >= birth[4] {
+        age[4] = (month - carry) - birth[4]
+        carry = 0
+    } else {
+        age[4] = ((month - carry) + 12) - birth[4]
+        carry = 1
+    }
+
+    age[5] = (year - carry) - birth[5]
+
+    return age
+}
+
+get_age :: proc(age: Time) -> string {
+	day_buf: [4]byte
+	month_buf: [4]byte
+	year_buf: [4]byte
+
+	day_str: string = strconv.itoa(day_buf[:], age[3])
+	month_str: string = strconv.itoa(month_buf[:], age[4])
+	year_str: string = strconv.itoa(year_buf[:], age[5])
+
+	new: string = strings.concatenate({
+		year_str, " years, ", month_str, " months, ", day_str, " days."
+	})
+
+	return new
+}

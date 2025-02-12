@@ -218,3 +218,14 @@ rebuild_path :: proc(source_pos, target_pos: vec3i, list: ^map[vec3i]node) -> [d
 get_heuclidean :: proc(source, target: vec3i) -> int {
 	return math.abs(source.x - target.x) + math.abs(source.z - target.z)
 }
+
+// --------------------- Tools -------------------------------------------
+control_entity_exit_pos :: proc(ent: ^Entity) {
+	cell := &world[ent.pos] 
+	cell.entity = {}
+}
+
+control_entity_enter_pos :: proc(ent: ^Entity) {
+	cell := &world[ent.pos] 
+	cell.entity = ent	
+}

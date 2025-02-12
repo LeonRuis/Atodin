@@ -14,7 +14,7 @@ GameMode :: enum {
 gamemode: GameMode = .POINTER
 in_gui: bool = false
 
-current_entity: ^Entity = &gray_rat
+current_entity: int 
 pointer_pos: vec3i
 wall_rotation: int = 0
 
@@ -80,15 +80,12 @@ update_pointer_mode :: proc() {
 	if rl.IsMouseButtonReleased(.LEFT) {
 		// select entity
 		if world[pointer_pos].entity != {} {
-			current_entity = world[pointer_pos].entity 
+			current_entity = world[pointer_pos].entity.id
 		}
 
 		if pointer_pos in plants {
 			fmt.println(plants[pointer_pos])
 		}
-
-		fmt.println("Game/line 90:", pointer_pos)
-		fmt.println("Game/line 91:", get_validation_plant_in_pos(carrot_data, pointer_pos))
 	}
 
 	// right click options

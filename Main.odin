@@ -91,9 +91,9 @@ main :: proc() {
 
 	//##
 	test_init_rats()
-	// init_plant_in_world(&carrot)
+	current_entity = 1
+
 	init_some_plants()
-	// plant_patch_carrot(&carrot_data)
 
 	//##
 
@@ -101,9 +101,7 @@ main :: proc() {
 
 		if tick >= 25 {
 			tick = 0
-			for ent in entities {
-				update_entity(ent)
-			}
+			update_entities()
 
 			update_plants()
 			update_time()
@@ -112,7 +110,7 @@ main :: proc() {
 		if !in_gui {
 			if gamemode == .FOCUS_ENTITY {
 				rl.UpdateCamera(&camera3, .THIRD_PERSON)
-				camera3.target = to_v3(current_entity.pos)
+				camera3.target = to_v3(get_entity().pos)
 			} else {
 				rl.UpdateCamera(&camera3, .FREE)
 			}
@@ -226,7 +224,9 @@ main :: proc() {
 
 			rl.DrawFPS(0, 0)
 
-			entity_gui()
+			if current_entity != -1 {
+				entity_gui()
+			}
 			speed_gui()
 
 		rl.EndDrawing()

@@ -2,6 +2,7 @@ package Atalay
 
 import rl "vendor:raylib"
 import fmt "core:fmt"
+import rand "core:math/rand"
 
 Plant_Data :: struct {
 	max_grow: int,
@@ -117,8 +118,6 @@ patch_behavior :: proc(center: vec3i, p_data: Plant_Data, limit: int) {
 		return
 	}
 
-	// patch repel radius
-	// patch plant radius
 	visited_pos: map[vec3i]bool
 
 	repel_radius: f32 = 25
@@ -216,7 +215,7 @@ init_some_plants :: proc() {
 	//  Init Plants Datas Models
 	carrot_data.model = carrots_model
 
-	positions: int = 1
+	positions: int = 1 
 	count: int = 0
 
 	plant_data: Plant_Data = carrot_data
@@ -260,8 +259,9 @@ delete_plant_world :: proc(pos: vec3i) {
 
 
 create_plant_world :: proc(pos: vec3i, plant_data: Plant_Data) {
+
 	new_plant: Plant_World = {
-		grow = 0, 
+		grow = rand.int_max(199), 
 		calories = 1000,
 		seeding = false,
 		data = plant_data

@@ -10,10 +10,14 @@ hour: int = 0
 
 day: int = 1 
 month: int = 1 
-year: int = 1 
+year: int = 0
+
+secs_per_tic: int = 30 // 2 seems like a good number
 
 update_time :: proc() {
-	sec += 30 // 2 seems like a good number
+	sec += secs_per_tic 
+	// min += 30
+	// month += 1
 
 	if sec >= 60 {
 		min += 1	
@@ -50,7 +54,7 @@ draw_time :: proc() {
 	}
 
 	date_rect: rl.Rectangle = {
-		400,
+		500,
 		0, 
 		100,
 		20
@@ -123,7 +127,58 @@ get_current_month :: proc() -> string {
 		case 1:
 			return "January"
 
+		case 2: 
+			return "February"
+
+		case 3: 
+			return "March"
+
+		case 4: 
+			return "April"
+
+		case 5: 
+			return "May"
+
+		case 6: 
+			return "June"
+
+		case 7: 
+			return "July"
+
+		case 8: 
+			return "August"
+
+		case 9: 
+			return "September"
+
+		case 10: 
+			return "October"
+
+		case 11: 
+			return "November"
+
+		case 12: 
+			return "December"
+
 		case: 
 			return "No valid month"
 	}
+}
+
+date_to_string :: proc(dob: Time) -> string {
+	day_buf: [4]byte
+	month_buf: [4]byte
+	year_buf: [4]byte
+
+	day_str: string = strconv.itoa(day_buf[:], dob[3])
+	month_str: string = strconv.itoa(month_buf[:], dob[4])
+	year_str: string = strconv.itoa(year_buf[:], dob[5])
+
+	date_str: string = strings.concatenate({
+		day_str, get_current_day_ordinal(), ", ", 
+		get_current_month(), ", Year ", 
+		year_str
+	})
+
+	return date_str
 }
