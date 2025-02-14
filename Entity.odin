@@ -6,24 +6,43 @@ import rand "core:math/rand"
 import strconv "core:strconv"
 import strings "core:strings"
 
+//##
+name_pull: [dynamic]string = {
+	"Rose",
+	"Leaf",
+	"Apple"
+}
+
+pick_rand_name_in_pull :: proc() -> string {
+	str: string = "Valid name"
+	// if len(name_pull) > 0 {
+	// 	index: int = rand.int_max(len(name_pull) - 1)
+	// 	str: string = name_pull[index]
+
+	// 	unordered_remove(&name_pull, index)
+	// }
+	return str
+}
+//##
+
 Entity :: struct {
 	pos: vec3i,
 	target_pos: vec3i,
 	path: [dynamic]vec3i,
 	color: rl.Color,
 
-	name: cstring,
+	name: string,
 	model: rl.Model,
 	tasks: [dynamic]Task,
 
 	water_max: int,
-	water: f32,
+	water: int,
 
 	food_max: int,
-	food: f32,
+	food: int,
 
 	sleep_max: int,
-	sleep: f32,
+	sleep: int,
 
 	idle_tick_count: int,
 
@@ -32,6 +51,12 @@ Entity :: struct {
 	age: Time,
 
 	id: int,
+
+	mating_max: int,
+	mating: int,
+
+	social_max: int,
+	social: int
 }
 
 entities: map[int]Entity
@@ -46,8 +71,8 @@ rand_ :: proc() -> vec3i {
 }
 
 test_init_rats :: proc() {
-	spawn_entity(rand_(), true, rl.BLUE, rat_blue_model, "Blue Rat")
-	spawn_entity(rand_(), false, rl.ORANGE, rat_orange_model, "Orange Rat")
+	spawn_entity(rand_(), true, rl.BLUE, rat_blue_model, "Pinnaple")
+	spawn_entity(rand_(), false, rl.ORANGE, rat_orange_model, "Carrot")
 }
 
 draw_rat :: proc() {
@@ -120,6 +145,10 @@ update_entity :: proc(ent: ^Entity) {
 		ent.sleep -= 1
 	}
 
+	if ent.social > 0 {
+		ent.social -= 1
+	}
+
 	// Task Flow Control
 	if len(ent.tasks) > 0 {
 		execute_task(ent, ent.tasks[0])
@@ -127,13 +156,13 @@ update_entity :: proc(ent: ^Entity) {
 		ent.idle_tick_count += 1
 	}
 
-	if ent.idle_tick_count == 3 {
+	if ent.idle_tick_count == 2 {
 		add_task(ent, Move_To{rand_(), false, true})
 		ent.idle_tick_count = 0
 	}
 
 	// Auto food
-	if ent.food <= f32(ent.food_max) / 3 {
+	if ent.food <= ent.food_max / 3 {
 
 		// Vision food
 		cost: int = 9999
@@ -168,7 +197,7 @@ update_entity :: proc(ent: ^Entity) {
 		E
 	}
 
-	if ent.water <= f32(ent.water_max) / 3 {
+	if ent.water <= ent.water_max / 3 {
 		// Vision water 
 		cost: int = 9999
 		pos: vec3i
@@ -211,8 +240,29 @@ update_entity :: proc(ent: ^Entity) {
 		}
 	} 
 
-	if ent.sleep <= f32(ent.sleep_max) / 4 {
+	if ent.sleep <= ent.sleep_max / 4 {
 		add_task(ent, Sleep{})
+	}
+
+	// Auto Social
+	for task in ent.tasks {
+		#partial switch t in task {
+			case Social_Positive:
+				return
+		}
+	} 
+
+	if ent.social < ent.social_max / 2 {
+		if len(entities) > 1 {
+			for ind, social_ent in entities {
+				if social_ent.id == ent.id {
+					continue
+				}
+
+				add_task(ent, Social_Positive{social_ent.id, false, false, 10})
+				return
+			}
+		}
 	}
 }
 
@@ -222,7 +272,7 @@ set_entity_target_pos :: proc(ent: ^Entity, tar: vec3i, adyacent: bool) {
 	if len(ent.path) > 0 {
 		ordered_remove(&ent.path, 0)
 
-		if adyacent {
+		if adyacent && len(ent.path) != 0 {
 			ordered_remove(&ent.path, len(ent.path) - 1)
 		}
 	}
@@ -254,7 +304,8 @@ Task :: union {
 	Move_To,
 	Eat_Plant,
 	Drink_World,
-	Sleep
+	Sleep,
+	Social_Positive
 }
 
 Move_To :: struct {
@@ -276,7 +327,15 @@ Drink_World :: struct {
 Sleep :: struct {}
 // sleep cannot be canceled, the entity should be awakened for world activity (loud sounds, other entity, etc)
 
+Social_Positive :: struct {
+	entity_id: int,
+	init: bool,
+	is_auto: bool,
+	ticks_to_end: int,
+}
+
 add_task :: proc(ent: ^Entity, task: Task) {
+	// Remove auto moves
 	for task in ent.tasks {
 		#partial switch t in task {
 			case Move_To:
@@ -285,6 +344,13 @@ add_task :: proc(ent: ^Entity, task: Task) {
 					fmt.println("Auto Task Erased")
 				}
 		}
+	}
+
+	#partial switch t in task {
+		case Social_Positive:
+			if !t.is_auto {
+				add_task(get_entity_from_id(t.entity_id), Social_Positive{ent.id, true, true, 10})
+			}
 	}
 
 	append(&ent.tasks, task)
@@ -321,7 +387,7 @@ init_task :: proc(ent: ^Entity, task: Task) {
 }
 
 execute_task :: proc(ent: ^Entity, task: Task) {
-	switch t in task {
+	switch &t in task {
 		case Move_To:
 			if t.init == false {
 				init_task(ent, task)
@@ -352,7 +418,7 @@ execute_task :: proc(ent: ^Entity, task: Task) {
 					delete_plant_world(t.target_pos)
 					ordered_remove(&ent.tasks, 0)
 
-				} else if ent.food > f32(ent.food_max) {
+				} else if ent.food >= ent.food_max {
 					ordered_remove(&ent.tasks, 0)
 				}
 			}
@@ -365,7 +431,7 @@ execute_task :: proc(ent: ^Entity, task: Task) {
 			if walk_entity(ent) {
 				ent.water += 100
 
-				if ent.water >= f32(ent.water_max) {
+				if ent.water >= ent.water_max {
 					ordered_remove(&ent.tasks, 0)
 				}
 			}
@@ -373,16 +439,95 @@ execute_task :: proc(ent: ^Entity, task: Task) {
 		case Sleep:
 			ent.sleep += 10
 
-			if ent.sleep >= f32(ent.sleep_max) {
-				ent.sleep = f32(ent.sleep_max)
+			if ent.sleep >= ent.sleep_max {
+				ent.sleep = ent.sleep_max
 				ordered_remove(&ent.tasks, 0)
 			}
 
+		case Social_Positive:
+			if !t.is_auto {
+				#partial switch &t_social in get_entity_from_id(t.entity_id).tasks[0] {
+					case Social_Positive:
+						if t_social.entity_id != ent.id {
+							return
+						}
+
+						if !t.init {
+							init_task(ent, task)
+							set_entity_target_pos(
+								ent,
+								get_entity_from_id(t.entity_id).pos,
+								true
+							)
+							t.init = true
+						}
+
+						if walk_entity(ent) {
+							if t.ticks_to_end > 0 {
+
+								ent.social += 120 
+								ent.mating += 1 
+
+								get_entity_from_id(t.entity_id).social += 120 
+								get_entity_from_id(t.entity_id).mating += 2 
+
+								t.ticks_to_end -= 2 
+							}
+
+							if t.ticks_to_end == 0 {
+								// Remove from self
+								ordered_remove(&ent.tasks, 0)
+
+								// Remove from social target
+								ordered_remove(&get_entity_from_id(t.entity_id).tasks, 0)
+
+								pregnant_id: int = -1
+								pregnant: ^Entity = {}
+								if ent.gender && !get_entity_from_id(t.entity_id).gender {
+									pregnant_id = t.entity_id 
+								}
+
+								if !ent.gender && get_entity_from_id(t.entity_id).gender {
+									pregnant_id = ent.id
+								}
+
+								if pregnant_id != -1 {
+									pregnant = get_entity_from_id(pregnant_id)
+
+									if pregnant.mating >= pregnant.mating_max {
+										fmt.println("child ==========================================")
+										spawn_entity(rand_(), false, rl.ORANGE, rat_orange_model, pick_rand_name_in_pull())
+									}
+								}
+							}
+
+
+							/*
+							Interacciones sociales deben generar una reaccion, por ejemplo: una interacion positiva puede dar puntos de mating, una interaccion negativa puede hacer la entidad huir.
+							esto es por que a veces alguna entidad, digase rata, puede interactuar con otra de otro tipo, digase perro. Diferentes factores resultaran en diferentes outputs negativos y positivos.
+							*/
+						}
+
+					case:
+						fmt.println("waiting to entity")
+				}
+			}
+	}
+}
+
+delete_task :: proc(ent: ^Entity, task: Task) {
+	#partial switch t in task {
+		case Social_Positive:
+			ordered_remove(&ent.tasks, 0)
+			ordered_remove(&get_entity_from_id(t.entity_id).tasks, 0)
+
+		case:
+			return
 	}
 }
 
 // --------------------------------------------------------------------------
-spawn_entity :: proc(pos: vec3i, gender: bool, color: rl.Color, model:rl.Model, name: cstring) {
+spawn_entity :: proc(pos: vec3i, gender: bool, color: rl.Color, model:rl.Model, name: string) {
 	new_entity: Entity = {
 		pos = pos,
 		target_pos = {0, 0, 0},
@@ -394,10 +539,10 @@ spawn_entity :: proc(pos: vec3i, gender: bool, color: rl.Color, model:rl.Model, 
 		tasks = {},
 
 		water_max = 500,
-		water = 100,
+		water = 500,
 
 		food_max = 500,
-		food = 100,
+		food = 500,
 
 		sleep_max = 1000,
 		sleep = 999,
@@ -408,7 +553,13 @@ spawn_entity :: proc(pos: vec3i, gender: bool, color: rl.Color, model:rl.Model, 
 		dob = {hour, min, sec, day, month, year},
 		age = {0, 0, 0, 0, 0, 0},
 
-		id = get_valid_entitie_id()
+		id = get_valid_entitie_id(),
+
+		mating_max = 100,
+		mating = 0,
+
+		social_max = 1500,
+		social = 30
 	}
 
 	control_entity_enter_pos(&new_entity)
@@ -422,12 +573,18 @@ get_valid_entitie_id :: proc() -> int {
 	return valid_id
 }
 
-get_entity :: proc() -> ^Entity {
+get_current_entity :: proc() -> ^Entity {
 	return &entities[current_entity]
 }
 
+get_entity_from_id :: proc(id: int) -> ^Entity {
+	return &entities[id]
+}
+
 despawn_entity :: proc(ent: ^Entity) {
-	spawn_entity(rand_(), true, rl.BLUE, rat_blue_model, "Blue Rat")
+	for task in ent.tasks {
+		delete_task(ent, task)
+	}
 
 	control_entity_exit_pos(ent)
 	delete_key(&entities, ent.id)

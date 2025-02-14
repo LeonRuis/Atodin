@@ -248,6 +248,7 @@ draw_plants :: proc() {
 
 // --------------- Plant Actions ----------------------------
 delete_plant_world :: proc(pos: vec3i) {
+	fmt.println("Delete Plant")
 	delete_key(&plants, pos)
 
 	for ed_plnt, i in edible_plants {

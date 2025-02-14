@@ -79,8 +79,8 @@ update_mode :: proc() {
 update_pointer_mode :: proc() {
 	if rl.IsMouseButtonReleased(.LEFT) {
 		// select entity
-		if world[pointer_pos].entity != {} {
-			current_entity = world[pointer_pos].entity.id
+		if world[pointer_pos].entity_id != -1 {
+			current_entity = world[pointer_pos].entity_id
 		}
 
 		if pointer_pos in plants {

@@ -10,7 +10,7 @@ cell :: struct {
 	cells_conected: map[vec3i]bool,
 	position: vec3i,
 	walls: [4]Wall,
-	entity: ^Entity,
+	entity_id: int,
 }
 
 node :: struct {
@@ -53,7 +53,7 @@ init_world_path :: proc() {
 					{},
 					pos,
 					{},
-					{},
+					-1,
 				}
 			}
 		}
@@ -222,10 +222,10 @@ get_heuclidean :: proc(source, target: vec3i) -> int {
 // --------------------- Tools -------------------------------------------
 control_entity_exit_pos :: proc(ent: ^Entity) {
 	cell := &world[ent.pos] 
-	cell.entity = {}
+	cell.entity_id = -1 
 }
 
 control_entity_enter_pos :: proc(ent: ^Entity) {
 	cell := &world[ent.pos] 
-	cell.entity = ent	
+	cell.entity_id = ent.id	
 }

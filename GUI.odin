@@ -125,8 +125,14 @@ menu_right_click :: proc() {
 		append(&menu_buttons, btn_drink_world)
 	} 
 
+	// Social +
+	if world[pointer_pos].entity_id != current_entity && world[pointer_pos].entity_id != -1 {
+		append(&menu_buttons, btn_positive_social)
+		social_entity = world[pointer_pos].entity_id
+	}
+
 	// Selected entity Options
-	if get_entity().pos == pointer_pos {
+	if get_current_entity().pos == pointer_pos {
 		append(&menu_buttons, btn_sleep)
 	}
 
@@ -134,29 +140,31 @@ menu_right_click :: proc() {
 }
 
 pressed_move_here :: proc() {
-	add_task(get_entity(), Move_To{pointer_pos, false, false})
+	add_task(get_current_entity(), Move_To{pointer_pos, false, false})
 	set_mode(.POINTER)
 }
 
 pressed_eat_plant :: proc() {
-	add_task(get_entity(), Eat_Plant{false, pointer_pos})
+	add_task(get_current_entity(), Eat_Plant{false, pointer_pos})
 	set_mode(.POINTER)
 }
 
 pressed_drink_world :: proc() {
-	add_task(get_entity(), Drink_World{false, pointer_pos})
+	add_task(get_current_entity(), Drink_World{false, pointer_pos})
 	set_mode(.POINTER)
 }
 
 pressed_sleep :: proc() {
-	add_task(get_entity(), Sleep{})
+	add_task(get_current_entity(), Sleep{})
 	set_mode(.POINTER)
 }
 
 pressed_positive_social :: proc() {
-	fmt.println("Positive")
+	add_task(get_current_entity(), Social_Positive{social_entity, false, false, 10})
 	set_mode(.POINTER)
 }
+
+social_entity: int = -1
 //-------------------------------------------------------------------------------
 entity_gui :: proc() {
 	// Data Display
@@ -176,7 +184,7 @@ entity_gui :: proc() {
 	labels: [dynamic]Label
 
 	gender: string
-	switch get_entity().gender {
+	switch get_current_entity().gender {
 		case true:
 			gender = "Male"
 
@@ -192,14 +200,14 @@ entity_gui :: proc() {
 		{}
 	}
 
-	dob_string: string = strings.concatenate({"Date of Bird: ", date_to_string(get_entity().dob)})
+	dob_string: string = strings.concatenate({"Date of Bird: ", date_to_string(get_current_entity().dob)})
 	dob_text: cstring = strings.clone_to_cstring(dob_string)
 	label_dob: Label = { // DOB = Date of Bird
 		dob_text,
 		{}
 	}
 
-	age_text: cstring = strings.clone_to_cstring(get_age(get_entity().age))
+	age_text: cstring = strings.clone_to_cstring(get_age(get_current_entity().age))
 
 	label_age: Label = { 
 		age_text,
@@ -210,12 +218,12 @@ entity_gui :: proc() {
 	append(&labels, label_dob)
 	append(&labels, label_age)
 
-	rl.GuiPanel(menu_data_rect, get_entity().name)
+	rl.GuiPanel(menu_data_rect, strings.clone_to_cstring(get_current_entity().name))
 
 	control_labels(&labels, menu_data_rect)
 
 	// Tasks
-	menu_width: f32 = 100
+	menu_width: f32 = 150
 	menu_height: f32 = 100
 
 	menu_x: f32 = menu_data_width 
@@ -252,13 +260,32 @@ entity_gui :: proc() {
 		rect.height/3
 	}
 
-	rl.GuiProgressBar(water_rect, "", "Water", &get_entity().water, 0, f32(get_entity().water_max))
-	rl.GuiProgressBar(food_rect, "", "Food", &get_entity().food, 0, f32(get_entity().food_max))
-	rl.GuiProgressBar(sleep_rect, "", "Sleep", &get_entity().sleep, 0, f32(get_entity().sleep_max))
+	social_rect: rl.Rectangle = {
+		rect.x + rect.width + 300, 
+		rect.y + rect.height/3 * 2,
+		200,
+		rect.height/3
+	}
+
+	mating_rect: rl.Rectangle = {
+		rect.x + rect.width + 300, 
+		rect.y,
+		200,
+		rect.height/3
+	}
+
+	ent := get_current_entity()
+	water, food, sleep, social, mating: f32 = f32(ent.water), f32(ent.food), f32(ent.sleep), f32(ent.social), f32(ent.mating)
+
+	rl.GuiProgressBar(water_rect, "", "Water", &water, 0, f32(ent.water_max))
+	rl.GuiProgressBar(food_rect, "", "Food", &food, 0, f32(ent.food_max))
+	rl.GuiProgressBar(sleep_rect, "", "Sleep", &sleep, 0, f32(ent.sleep_max))
+	rl.GuiProgressBar(social_rect, "", "Social", &social, 0, f32(ent.social_max))
+	rl.GuiProgressBar(mating_rect, "", "Mating", &mating, 0, f32(ent.mating_max))
 
 	// Task Buttons
 	btn_task_offset: f32 = 25 
-	for task, i in get_entity().tasks {
+	for task, i in get_current_entity().tasks {
 		btn_rect: rl.Rectangle = {
 			menu_x,
 			menu_y + btn_task_offset,
@@ -267,7 +294,7 @@ entity_gui :: proc() {
 		} 
 		
 		if rl.GuiButton(btn_rect, get_task_title(task)) {
-			ordered_remove(&get_entity().tasks, i)
+			ordered_remove(&get_current_entity().tasks, i)
 		}		
 	
 		btn_task_offset += 30
@@ -287,6 +314,10 @@ get_task_title :: proc(task: Task) -> cstring {
 
 		case Sleep: 
 			return "Sleep"
+
+		case Social_Positive: 
+			str: string = strings.concatenate({"Social With ", get_entity_from_id(t.entity_id).name})
+			return strings.clone_to_cstring(str) 
 
 		case: 
 			return "Not Defined Task"
@@ -335,7 +366,7 @@ speed_gui :: proc() {
 			tick += 2
 
 		case 3:
-			tick += 5 
+			tick += 15
 
 		case:	
 			fmt.println("No Speed Defined")

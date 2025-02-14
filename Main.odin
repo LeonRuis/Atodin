@@ -102,7 +102,6 @@ main :: proc() {
 		if tick >= 25 {
 			tick = 0
 			update_entities()
-
 			update_plants()
 			update_time()
 		}		
@@ -110,7 +109,7 @@ main :: proc() {
 		if !in_gui {
 			if gamemode == .FOCUS_ENTITY {
 				rl.UpdateCamera(&camera3, .THIRD_PERSON)
-				camera3.target = to_v3(get_entity().pos)
+				camera3.target = to_v3(get_current_entity().pos)
 			} else {
 				rl.UpdateCamera(&camera3, .FREE)
 			}
