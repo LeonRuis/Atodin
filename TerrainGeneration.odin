@@ -35,15 +35,15 @@ generate_world_terrain :: proc() {
 				moist_value := noise.noise_2d(seed, {f64(x) * scale, f64(z) * scale}) * 100
 
 				water_source: bool	
-				cell_tile: rl.Model = grass_tile
+				cell_tile: rl.Model = grass_model
 
 
 				if  temp_value > 40 {
-					cell_tile = sand_tile
+					cell_tile = sand_model
 				} 
 
 				if moist_value >= 70 {
-					cell_tile = water_tile
+					cell_tile = water_model 
 					water_source = true
 				}	
 

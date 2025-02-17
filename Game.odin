@@ -133,7 +133,7 @@ update_wall_place_mode :: proc() {
 	}
 
 	rl.DrawModelEx(
-		wall_tile,
+		wall_model,
 		pos * {1, 2, 1},
 		{0, 1, 0},
 		rot,
@@ -144,7 +144,7 @@ update_wall_place_mode :: proc() {
 	// Set Wall in World
 	if rl.IsMouseButtonReleased(.LEFT) {
 		new_wall: Wall = {
-			wall_tile,
+			wall_model,
 			pos,
 			rot
 		}

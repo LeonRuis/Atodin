@@ -45,7 +45,7 @@ init_world_path :: proc() {
 				walk: bool = (
 						pos2d in terrain && 
 						terrain[pos2d].floor_height == y && 
-						terrain[pos2d].tile != water_tile
+						terrain[pos2d].tile != water_model
 					)
 
 				world[pos] = {

@@ -16,22 +16,6 @@ camera3: rl.Camera = {
 	.PERSPECTIVE
 }
 
-world_atlas: rl.Texture
-
-grass_tile: rl.Model
-sand_tile: rl.Model
-water_tile: rl.Model
-wall_tile: rl.Model
-
-rat_blue_model: rl.Model
-rat_orange_model: rl.Model
-
-rat_blue_texture: rl.Texture
-rat_orange_texture: rl.Texture
-
-carrots_model: rl.Model
-carrots_texture: rl.Texture
-
 Wall :: struct {
 	model: rl.Model,
 	pos: vec3,
@@ -46,48 +30,16 @@ main :: proc() {
 	rl.DisableCursor()
 	rl.SetExitKey(.BACKSPACE)
 
-	world_atlas = rl.LoadTexture("assets/WorldAtlas.png")
-	defer rl.UnloadTexture(world_atlas)
-
-	grass_tile = rl.LoadModel("assets/Grass.obj")
-	grass_tile.materials[0].maps[0].texture = world_atlas
-	defer rl.UnloadModel(grass_tile)
-
-	sand_tile = rl.LoadModel("assets/Sand.obj")
-	sand_tile.materials[0].maps[0].texture = world_atlas
-	defer rl.UnloadModel(sand_tile)
-
-	water_tile = rl.LoadModel("assets/Water.obj")
-	water_tile.materials[0].maps[0].texture = world_atlas
-	defer rl.UnloadModel(water_tile)
-
-	wall_tile = rl.LoadModel("assets/Log_Wall.obj")
-	wall_tile.materials[0].maps[0].texture = world_atlas
-	defer rl.UnloadModel(wall_tile)
-
-	carrots_texture = rl.LoadTexture("assets/Carrots.png")
-	carrots_model = rl.LoadModel("assets/Carrots.obj")
-	carrots_model.materials[0].maps[0].texture = carrots_texture
-	defer rl.UnloadTexture(carrots_texture)
-	defer rl.UnloadModel(carrots_model)
-
-	rat_blue_texture = rl.LoadTexture("assets/Rat_1.png")
-	rat_blue_model = rl.LoadModel("assets/Rat.obj")
-	rat_blue_model.materials[0].maps[0].texture = rat_blue_texture
-	defer rl.UnloadTexture(rat_blue_texture)
-	defer rl.UnloadModel(rat_blue_model)
-
-	rat_orange_texture = rl.LoadTexture("assets/Rat_2.png")
-	rat_orange_model = rl.LoadModel("assets/Rat.obj")
-	rat_orange_model.materials[0].maps[0].texture = rat_orange_texture
-	defer rl.UnloadTexture(rat_orange_texture)
-	defer rl.UnloadModel(rat_orange_model)
+	load_textures_and_models()
+	defer unload_textures_and_models()
 
 	// INITS 
 	generate_world_terrain()
 	init_world_path()
 
 	rl.SetTargetFPS(60)
+
+
 
 	//##
 	test_init_rats()
@@ -143,6 +95,7 @@ main :: proc() {
 			rl.ClearBackground(rl.SKYBLUE)
 
 			rl.BeginMode3D(camera3)
+				rl.DrawModel(male_model, {0, 0, 0}, 1, rl.WHITE)
 				//##
 				draw_rat()
 				//##
