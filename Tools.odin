@@ -1,5 +1,6 @@
 package Atalay
 
+import rl "vendor:raylib"
 import rand "core:math/rand"
 
 vec2i :: [2]int
@@ -8,8 +9,15 @@ vec3i :: [3]int
 vec2 :: [2]f32
 vec3 :: [3]f32
 
+
+
+//// -------------------------------------------- Vector -----------------------------------------------
 to_v3 :: proc(a: vec3i) -> vec3{
 	return {f32(a.x), f32(a.y), f32(a.z)}
+}
+
+to_visual_world :: proc(cell_pos: vec3i) -> vec3i {
+	return {cell_pos.x, cell_pos.y * 2, cell_pos.z}
 }
 
 ran_v3i :: proc() -> vec3i {
@@ -17,10 +25,6 @@ ran_v3i :: proc() -> vec3i {
 	z: int = int(rand.int31_max(i32(CHUNK_SIZE.z)))
 
 	return {int(x), 0, int(z)}
-}
-
-to_visual_world :: proc(cell_pos: vec3i) -> vec3i {
-	return {cell_pos.x, cell_pos.y * 2, cell_pos.z}
 }
 
 ////----------------------------------------------

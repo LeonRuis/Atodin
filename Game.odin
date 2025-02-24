@@ -8,7 +8,8 @@ GameMode :: enum {
 	GUI,
 	WALL_PLACE,
 	FOCUS_ENTITY,
-	RIGHT_CLICK
+	RIGHT_CLICK,
+	PAUSE_GUI
 }
 
 gamemode: GameMode = .POINTER
@@ -19,7 +20,7 @@ pointer_pos: vec3i
 wall_rotation: int = 0
 
 //##
-current_plant: ^Plant_World
+current_plant: ^PlantInstance
 //##
 
 set_mode :: proc(mode: GameMode) {
@@ -51,8 +52,12 @@ set_mode :: proc(mode: GameMode) {
 
 		case .FOCUS_ENTITY:
 			rl.DisableCursor()
-
 			in_gui = false 
+
+		case .PAUSE_GUI:
+			rl.EnableCursor()
+			speed = 0
+			in_gui = true
 
 		case:
 			return
@@ -86,6 +91,8 @@ update_pointer_mode :: proc() {
 		if pointer_pos in plants {
 			fmt.println(plants[pointer_pos])
 		}
+
+		fmt.println(pointer_pos)
 	}
 
 	// right click options

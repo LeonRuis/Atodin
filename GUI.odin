@@ -324,9 +324,40 @@ get_task_title :: proc(task: Task) -> cstring {
 	}
 }
 
+//---------------- Pause GUI --------------------------------------
+in_borderless: bool = false
+pause_gui :: proc() {
+	rect: rl.Rectangle = {
+		0,
+		0, 
+		WINDOW_WIDTH,
+		WINDOW_HEIGHT
+	}
+
+	btn_rect: rl.Rectangle = {
+		WINDOW_WIDTH / 2,
+		WINDOW_HEIGHT / 2,
+		200, 
+		200,
+	}
+
+	rl.GuiLabel(rect, "This is the Pause Menu")
+	if rl.GuiButton(btn_rect, "Borderless Window") {
+		rl.ToggleBorderlessWindowed()
+		if in_borderless {
+			WINDOW_WIDTH = 1400
+			WINDOW_HEIGHT = 750 
+		} else {
+			WINDOW_WIDTH = f32(rl.GetMonitorWidth(1))
+			WINDOW_HEIGHT = f32(rl.GetMonitorHeight(1))
+		}
+		in_borderless = !in_borderless
+	}
+}
+
 //---------------- Other guis -------------------------------------
 tick: int = 0
-a: i32 = 1
+speed: i32 = 1
 
 speed_gui :: proc() {
 	rect: rl.Rectangle = {
@@ -337,25 +368,25 @@ speed_gui :: proc() {
 	}
 
 	// Speed by GUI
-	rl.GuiToggleGroup(rect, "Pause;Normal;Fast;Forward", &a)
+	rl.GuiToggleGroup(rect, "Pause;Normal;Fast;Forward", &speed)
 
 	// Speed by Input
 	if rl.IsKeyReleased(.G) {
-		if a == 0 {
-			a = 1	
+		if speed == 0 {
+			speed = 1	
 		} else {
-			a = 0
+			speed = 0
 		}
 	} else if rl.IsKeyReleased(.ONE) {
-		a = 1
+		speed = 1
 	} else if rl.IsKeyReleased(.TWO) {
-		a = 2
+		speed = 2
 	} else if rl.IsKeyReleased(.THREE) {
-		a = 3
+		speed = 3
 	}
 
 	// Speed Control
-	switch a {
+	switch speed {
 		case 0: 
 			return
 

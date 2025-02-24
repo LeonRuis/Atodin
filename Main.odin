@@ -5,8 +5,8 @@ import rl "vendor:raylib"
 import rlgl "vendor:raylib/rlgl"
 
 ////
-WINDOW_WIDTH :: 1400
-WINDOW_HEIGHT :: 750 
+WINDOW_WIDTH: f32 = 1400
+WINDOW_HEIGHT: f32 = 750 
 
 camera3: rl.Camera = {
 	{0, 10, 10}, 
@@ -39,8 +39,6 @@ main :: proc() {
 
 	rl.SetTargetFPS(60)
 
-
-
 	//##
 	test_init_rats()
 	current_entity = 1
@@ -50,6 +48,7 @@ main :: proc() {
 	//##
 
 	for !rl.WindowShouldClose() {
+
 
 		if tick >= 25 {
 			tick = 0
@@ -66,6 +65,7 @@ main :: proc() {
 				rl.UpdateCamera(&camera3, .FREE)
 			}
 		}
+
 
 			//// Inputs
 		if rl.IsKeyReleased(.F) {
@@ -85,17 +85,29 @@ main :: proc() {
 			}
 		}
 
-		if rl.IsKeyReleased(.ESCAPE) {
+		if rl.IsKeyReleased(.U) {
 			if gamemode == .RIGHT_CLICK {
 				set_mode(.POINTER)
 			}
 		}
 
+		if rl.IsKeyReleased(.ESCAPE) {
+			if gamemode == .PAUSE_GUI {
+				set_mode(.POINTER)
+			} else {
+				set_mode(.PAUSE_GUI)
+			}
+		}
+
+		if rl.IsKeyReleased(.N) {
+			current_entity = -1
+		}
+
+
 		rl.BeginDrawing()
 			rl.ClearBackground(rl.SKYBLUE)
 
 			rl.BeginMode3D(camera3)
-				rl.DrawModel(male_model, {0, 0, 0}, 1, rl.WHITE)
 				//##
 				draw_rat()
 				//##
@@ -120,46 +132,6 @@ main :: proc() {
 							rl.WHITE)
 					}
 				}
-			
-			//## TEST Circle
-			// circle_center: vec3 = {-20, 2, -20}
-			// radius: f32 = 10 
-
-			// for r in 0..<radius {
-			//     for x in -r + 1..<r {
-			//         for z in -r + 1..<r {
-			//             this_pos: vec3 = {f32(x), 0, f32(z)}
-
-			//             // Verificar si está dentro del círculo
-			//             if (this_pos.x * this_pos.x + this_pos.z * this_pos.z) <= (r * r) {
-			//                 rl.DrawCubeV(
-			//                     (circle_center + this_pos) + {0.5, 0.5, 0.5}, 
-			//                     {1, 1, 1},
-			//                     rl.RED,
-			//                 )		
-			//             }
-			//         }
-			//     }
-			// }
-	
-
-			// for x in 0..< radius {
-			// 	for z in 0..< radius {
-			// 		this_pos: vec3 = {f32(x), 0, f32(z)}
-
-			// 		if this_pos == circle_center {
-			// 			continue
-			// 		} 
-
-			// 		rl.DrawCubeV(
-			// 			(circle_center - {3, 1, 3} + this_pos) + {0.5, 0.5, 0.5} , 
-			// 			{1, 1, 1},
-			// 			rl.RED,
-			// 		)		
-			// 	}
-			// }
-
-			//##
 
 			rl.EndMode3D()
 
@@ -170,6 +142,10 @@ main :: proc() {
 
 			if gamemode == .RIGHT_CLICK {
 				menu_right_click()
+			}
+
+			if gamemode == .PAUSE_GUI {
+				pause_gui()
 			}
 
 			draw_time()

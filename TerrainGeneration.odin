@@ -78,6 +78,9 @@ terrain_cell :: struct {
 
 draw_world_terrain :: proc() {
 	for key_pos, &cell in terrain {
-		rl.DrawModel(cell.tile, {f32(key_pos.x), f32(cell.floor_height * 2) , f32(key_pos.y)}, 1.0, rl.WHITE)
+		this_pos: vec3i = {key_pos.x, cell.floor_height, key_pos.y}
+		this_pos_visual: vec3 = to_v3(to_visual_world(this_pos))
+
+		rl.DrawModel(cell.tile, this_pos_visual, 1.0, rl.WHITE)
 	}
 }

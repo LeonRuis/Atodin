@@ -6,25 +6,6 @@ import rand "core:math/rand"
 import strconv "core:strconv"
 import strings "core:strings"
 
-//##
-name_pull: [dynamic]string = {
-	"Rose",
-	"Leaf",
-	"Apple"
-}
-
-pick_rand_name_in_pull :: proc() -> string {
-	str: string = "Valid name"
-	// if len(name_pull) > 0 {
-	// 	index: int = rand.int_max(len(name_pull) - 1)
-	// 	str: string = name_pull[index]
-
-	// 	unordered_remove(&name_pull, index)
-	// }
-	return str
-}
-//##
-
 Entity :: struct {
 	pos: vec3i,
 	target_pos: vec3i,
@@ -32,7 +13,7 @@ Entity :: struct {
 	color: rl.Color,
 
 	name: string,
-	model: rl.Model,
+	visual_instance: VisualInstance,
 	tasks: [dynamic]Task,
 
 	water_max: int,
@@ -56,8 +37,40 @@ Entity :: struct {
 	mating: int,
 
 	social_max: int,
-	social: int
+	social: int,
+
+	species: Species,
+	inventory: Inventory 
 }
+
+////
+
+
+NullItem :: struct {}
+
+Item :: struct {
+	name: string,
+}
+
+Slot :: union {
+	NullItem,
+	Item
+}
+
+Inventory :: map[BodyPart]Slot
+
+BodyPart :: enum {
+	L_HAND,
+	R_HAND,
+	MOUTH
+}
+////
+
+Species :: enum {
+	RAT, 
+	HUMAN
+}
+
 
 entities: map[int]Entity
 
@@ -71,8 +84,16 @@ rand_ :: proc() -> vec3i {
 }
 
 test_init_rats :: proc() {
-	spawn_entity(rand_(), true, rl.BLUE, rat_blue_model, "Pinnaple")
-	spawn_entity(rand_(), false, rl.ORANGE, rat_orange_model, "Carrot")
+	spawn_entity(rand_(), true, rl.BLUE, "Pinnaple", .RAT)
+	spawn_entity(rand_(), false, rl.ORANGE, "Carrot", .RAT)
+	spawn_entity(rand_(), true, rl.PINK, "Elten", .HUMAN)
+
+	//##
+	elten := get_entity_from_id(2)
+	elten.inventory[.L_HAND] = Item{
+		name = "Stick"
+	}
+	//##
 }
 
 draw_rat :: proc() {
@@ -102,11 +123,11 @@ draw_rat :: proc() {
 		}
 
 		rl.DrawModelEx(
-				ent.model, 
+				ent.visual_instance.game_model.model^, 
 				to_v3(to_visual_world(ent.pos)) + {0.5, 0, 0.5},
 				{0, 1, 0},
 				rot,
-				0.5,
+				ent.visual_instance.game_model.scale,
 				rl.WHITE
 			)
 	}
@@ -120,8 +141,9 @@ update_entities :: proc() {
 
 update_entity :: proc(ent: ^Entity) {
 	//#
-	ent.age = calculate_age(ent.dob)
 	//#
+
+	ent.age = calculate_age(ent.dob)
 
 		// Deaths
 	// Age
@@ -153,10 +175,10 @@ update_entity :: proc(ent: ^Entity) {
 	if len(ent.tasks) > 0 {
 		execute_task(ent, ent.tasks[0])
 	} else { 
-		ent.idle_tick_count += 1
+		ent.idle_tick_count += 1 
 	}
 
-	if ent.idle_tick_count == 2 {
+	if ent.idle_tick_count == 7 {
 		add_task(ent, Move_To{rand_(), false, true})
 		ent.idle_tick_count = 0
 	}
@@ -409,7 +431,7 @@ execute_task :: proc(ent: ^Entity, task: Task) {
 					return
 				}
 
-				plant: ^Plant_World = &plants[t.target_pos]
+				plant: ^PlantInstance = &plants[t.target_pos]
 
 				plant.calories -= 200
 				ent.food += 200
@@ -465,21 +487,24 @@ execute_task :: proc(ent: ^Entity, task: Task) {
 						if walk_entity(ent) {
 							if t.ticks_to_end > 0 {
 
-								ent.social += 120 
-								ent.mating += 1 
+								if ent.social < ent.social_max {
+									ent.social += 120 
+								}
 
-								get_entity_from_id(t.entity_id).social += 120 
-								get_entity_from_id(t.entity_id).mating += 2 
+								if get_entity_from_id(t.entity_id).social < get_entity_from_id(t.entity_id).social_max {
+									get_entity_from_id(t.entity_id).social += 120 
+								}
+
+								if ent.species == get_entity_from_id(t.entity_id).species {
+									ent.mating += 1 
+									get_entity_from_id(t.entity_id).mating += 2 
+								}
 
 								t.ticks_to_end -= 2 
 							}
 
-							if t.ticks_to_end == 0 {
-								// Remove from self
-								ordered_remove(&ent.tasks, 0)
-
-								// Remove from social target
-								ordered_remove(&get_entity_from_id(t.entity_id).tasks, 0)
+							if t.ticks_to_end <= 0 {
+								delete_task(ent, task)
 
 								pregnant_id: int = -1
 								pregnant: ^Entity = {}
@@ -496,7 +521,7 @@ execute_task :: proc(ent: ^Entity, task: Task) {
 
 									if pregnant.mating >= pregnant.mating_max {
 										fmt.println("child ==========================================")
-										spawn_entity(rand_(), false, rl.ORANGE, rat_orange_model, pick_rand_name_in_pull())
+										spawn_entity(rand_(), false, rl.ORANGE, "valid Child", .RAT)
 									}
 								}
 							}
@@ -527,7 +552,7 @@ delete_task :: proc(ent: ^Entity, task: Task) {
 }
 
 // --------------------------------------------------------------------------
-spawn_entity :: proc(pos: vec3i, gender: bool, color: rl.Color, model:rl.Model, name: string) {
+spawn_entity :: proc(pos: vec3i, gender: bool, color: rl.Color, name: string, species: Species) {
 	new_entity: Entity = {
 		pos = pos,
 		target_pos = {0, 0, 0},
@@ -535,7 +560,7 @@ spawn_entity :: proc(pos: vec3i, gender: bool, color: rl.Color, model:rl.Model, 
 		color = color,
 
 		name = name,
-		model = model, 
+		visual_instance = get_visual_instance_for_entity(species),
 		tasks = {},
 
 		water_max = 500,
@@ -559,8 +584,12 @@ spawn_entity :: proc(pos: vec3i, gender: bool, color: rl.Color, model:rl.Model, 
 		mating = 0,
 
 		social_max = 1500,
-		social = 30
+		social = 30,
+
+		species = species,
+		inventory = get_body_parts_inventory(species)
 	}
+
 
 	control_entity_enter_pos(&new_entity)
 
@@ -659,4 +688,42 @@ get_age :: proc(age: Time) -> string {
 	})
 
 	return new
+}
+
+// ----------------------------------- Other -----------------------------
+get_body_parts_inventory :: proc(species: Species) -> Inventory {
+	inventory: Inventory
+
+	#partial switch species {
+		case .RAT:
+			inventory[.MOUTH] = NullItem{}
+		case .HUMAN:
+			inventory[.L_HAND] = NullItem{}
+			inventory[.R_HAND] = NullItem{}
+
+		case:
+			fmt.println("Invalid species: get_body_parts function/Entity.odin")
+	}
+
+	return inventory
+}
+
+get_visual_instance_for_entity :: proc(species: Species) -> VisualInstance {
+	new_visual_instance: VisualInstance
+
+	#partial switch species {
+		case .RAT:
+			new_visual_instance = {
+				game_model = &Rat_Blue_GameModel,
+				rot = 0
+			}
+
+		case .HUMAN:
+			new_visual_instance = {
+				game_model = &Male_GameModel,
+				rot = 0
+			}
+	}
+
+	return new_visual_instance
 }
