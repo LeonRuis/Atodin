@@ -64,6 +64,7 @@ grass_model: rl.Model
 sand_model: rl.Model
 water_model: rl.Model
 wall_model: rl.Model
+grass_wall_model: rl.Model
 
 // Individual
 male_texture: rl.Texture
@@ -100,6 +101,9 @@ load_textures_and_models :: proc() {
 
 	wall_model = rl.LoadModel("assets/Log_Wall.obj")
 	wall_model.materials[0].maps[0].texture = terrain_atlas_texture
+
+	grass_wall_model = rl.LoadModel("assets/Grass_Wall.obj")
+	grass_wall_model.materials[0].maps[0].texture = terrain_atlas_texture
 
 	// Individual
 	load_pair_texture_model(&male_texture, &male_model, "assets/Male_texture.png", "assets/Male_object.obj")

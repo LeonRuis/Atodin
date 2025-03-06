@@ -18,7 +18,7 @@ camera3: rl.Camera = {
 
 Wall :: struct {
 	model: rl.Model,
-	pos: vec3,
+	pos: vec3
 	rot: f32 
 }
 ////
