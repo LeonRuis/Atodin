@@ -54,7 +54,9 @@ generate_world_terrain :: proc() {
 
 						int(temp_value),
 						int(moist_value),
-						water_source
+						water_source,
+
+						{}
 					}
 
 					terrain[{x, z}] = this_terrain_cell
@@ -73,7 +75,9 @@ terrain_cell :: struct {
 	temp: int,
 	moist: int,
 
-	water_source: bool
+	water_source: bool,
+
+	items: [dynamic]Item
 }
 
 draw_world_terrain :: proc() {
@@ -82,5 +86,34 @@ draw_world_terrain :: proc() {
 		this_pos_visual: vec3 = to_v3(to_visual_world(this_pos))
 
 		rl.DrawModel(cell.tile, this_pos_visual, 1.0, rl.WHITE)
+
+		// Draw First Item in Cell
+		if len(cell.items) > 0 {
+			draw_visual_instance(&cell.items[0].visual_instance, this_pos)
+		}
+	}
+}
+
+// ----------------------------------------------------------------------------
+put_item_in_terrain_cell :: proc(item: Item, pos: vec3i) {
+	pos2d: vec2i = {pos.x, pos.z}
+	cell := &terrain[pos2d]
+
+	if cell.floor_height != pos.y {
+		return
+	}
+
+	append(&cell.items, item)
+}
+
+remove_item_in_terrain_cell :: proc(item: Item, pos: vec3i) {
+	pos2d: vec2i = {pos.x, pos.z}
+	cell := &terrain[pos2d]	
+
+	for itm, i in cell.items {
+		if itm.id == item.id {
+			ordered_remove(&cell.items, i)
+			return
+		}
 	}
 }

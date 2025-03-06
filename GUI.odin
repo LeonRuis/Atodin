@@ -4,16 +4,15 @@ import rl "vendor:raylib"
 import fmt "core:fmt"
 import strings "core:strings"
 import strconv "core:strconv"
+import mem "core:mem"
 
 Button :: struct {
 	title: cstring,
 	action: proc(),
-	rect: rl.Rectangle
 }
 
 Label :: struct {
 	text: cstring,
-	rect: rl.Rectangle
 }
 
 //----------------- Menu Modes ------------------------------------------------------
@@ -41,14 +40,12 @@ menu_modes :: proc() {
 	btn_place_wall: Button = {
 		"Place Walls",
 		pressed_place_wall,
-		{}
 	}	
 
 	btn_pointer: Button = {
 		"Pointer",
 		pressed_pointer,
-		{}
-	}	
+	}
 
 	menu_buttons: [2]Button = {
 		btn_place_wall,
@@ -83,33 +80,32 @@ menu_right_click :: proc() {
 	btn_move_here: Button = {
 		"Move Entity Here...",
 		pressed_move_here,
-		{}
 	}
 
 	btn_eat_plant: Button = {
 		"Eat Plant",
 		pressed_eat_plant,
-		{}
 	}
 
 	btn_drink_world: Button = {
 		"Drink From Source",
 		pressed_drink_world,
-		{}
 	}
 
 	btn_sleep: Button = {
 		"Sleep",
 		pressed_sleep,
-		{}
 	}
 
 	btn_positive_social: Button = {
 		"Social +",
 		pressed_positive_social,
-		{}
 	}
 
+	btn_pick_item: Button = {
+		"Pick",
+		pressed_pick_item,
+	}
 
 	menu_buttons: [dynamic]Button
 
@@ -134,6 +130,16 @@ menu_right_click :: proc() {
 	// Selected entity Options
 	if get_current_entity().pos == pointer_pos {
 		append(&menu_buttons, btn_sleep)
+	}
+
+	// Pick Item
+	terrain_cell := &terrain[{pointer_pos.x, pointer_pos.z}]
+	if len(terrain_cell.items) == 1 {
+		if pointer_pos.y == terrain_cell.floor_height {
+			item := terrain_cell.items[0]
+			btn_pick_item.title = strings.clone_to_cstring(strings.concatenate({"Pick ", item.name}))
+			append(&menu_buttons, btn_pick_item)
+		}
 	}
 
 	control_buttons(&menu_buttons, menu_rect)
@@ -161,6 +167,11 @@ pressed_sleep :: proc() {
 
 pressed_positive_social :: proc() {
 	add_task(get_current_entity(), Social_Positive{social_entity, false, false, 10})
+	set_mode(.POINTER)
+}
+
+pressed_pick_item :: proc() {
+	add_task(get_current_entity(), PickItem{false, pointer_pos, terrain[{pointer_pos.x, pointer_pos.z}].items[0]})
 	set_mode(.POINTER)
 }
 
@@ -197,21 +208,18 @@ entity_gui :: proc() {
 
 	label_gender: Label = {
 		gender_text,
-		{}
 	}
 
 	dob_string: string = strings.concatenate({"Date of Bird: ", date_to_string(get_current_entity().dob)})
 	dob_text: cstring = strings.clone_to_cstring(dob_string)
 	label_dob: Label = { // DOB = Date of Bird
 		dob_text,
-		{}
 	}
 
 	age_text: cstring = strings.clone_to_cstring(get_age(get_current_entity().age))
 
 	label_age: Label = { 
 		age_text,
-		{}
 	}
 
 	append(&labels, label_gender)
@@ -317,6 +325,10 @@ get_task_title :: proc(task: Task) -> cstring {
 
 		case Social_Positive: 
 			str: string = strings.concatenate({"Social With ", get_entity_from_id(t.entity_id).name})
+			return strings.clone_to_cstring(str) 
+
+		case PickItem:
+			str: string = strings.concatenate({"Picking ", t.item.name})
 			return strings.clone_to_cstring(str) 
 
 		case: 

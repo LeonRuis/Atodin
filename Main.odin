@@ -24,7 +24,6 @@ Wall :: struct {
 ////
 
 main :: proc() {
-
 	////
 	rl.InitWindow(1400, 750, "Atalay")
 	rl.DisableCursor()
@@ -45,13 +44,23 @@ main :: proc() {
 
 	init_some_plants()
 
+	put_item_in_terrain_cell(
+		create_item(&Rock_GameModel, "A Rock"),
+		{1, 1, 0}
+	)
+	put_item_in_terrain_cell(
+		create_item(&Rock_GameModel, "Rock n roll"),
+		{0, 1, 0}
+	)
+
+	put_item_on_entity_inventory(create_item(&Rock_GameModel, "Rock test"), get_entity_from_id(1))
+	put_item_on_entity_inventory(create_item(&Rock_GameModel, "Rock test 2"), get_entity_from_id(1))
 	//##
 
 	for !rl.WindowShouldClose() {
-
-
 		if tick >= 25 {
 			tick = 0
+
 			update_entities()
 			update_plants()
 			update_time()
@@ -103,13 +112,17 @@ main :: proc() {
 			current_entity = -1
 		}
 
+		if rl.IsKeyReleased(.I) {
+			view_inventory = !view_inventory
+		}
+
 
 		rl.BeginDrawing()
 			rl.ClearBackground(rl.SKYBLUE)
 
 			rl.BeginMode3D(camera3)
 				//##
-				draw_rat()
+				draw_entities()
 				//##
 				update_pointer()
 
@@ -155,6 +168,11 @@ main :: proc() {
 			if current_entity != -1 {
 				entity_gui()
 			}
+
+			if view_inventory {
+				inventory_gui()
+			}
+
 			speed_gui()
 
 		rl.EndDrawing()

@@ -45,11 +45,16 @@ Entity :: struct {
 
 ////
 
-
 NullItem :: struct {}
 
 Item :: struct {
+	id: int,
+
+	visual_instance: VisualInstance,
+
 	name: string,
+
+	actions: [dynamic]proc(ent: ^Entity, item: Item)
 }
 
 Slot :: union {
@@ -84,19 +89,14 @@ rand_ :: proc() -> vec3i {
 }
 
 test_init_rats :: proc() {
-	spawn_entity(rand_(), true, rl.BLUE, "Pinnaple", .RAT)
-	spawn_entity(rand_(), false, rl.ORANGE, "Carrot", .RAT)
+	// spawn_entity(rand_(), true, rl.BLUE, "Pinnaple", .RAT)
+	// spawn_entity(rand_(), false, rl.ORANGE, "Carrot", .RAT)
 	spawn_entity(rand_(), true, rl.PINK, "Elten", .HUMAN)
-
-	//##
-	elten := get_entity_from_id(2)
-	elten.inventory[.L_HAND] = Item{
-		name = "Stick"
-	}
-	//##
+	spawn_entity(rand_(), true, rl.PINK, "Totl", .HUMAN)
 }
+//##
 
-draw_rat :: proc() {
+draw_entities :: proc() {
 	for id, ent in entities {
 		rl.DrawCubeWiresV(to_v3(to_visual_world(ent.pos)) + {0.5, 0.5, 0.5}, {1, 1, 1}, ent.color)
 
@@ -140,9 +140,6 @@ update_entities :: proc() {
 }
 
 update_entity :: proc(ent: ^Entity) {
-	//#
-	//#
-
 	ent.age = calculate_age(ent.dob)
 
 		// Deaths
@@ -327,7 +324,8 @@ Task :: union {
 	Eat_Plant,
 	Drink_World,
 	Sleep,
-	Social_Positive
+	Social_Positive,
+	PickItem
 }
 
 Move_To :: struct {
@@ -347,13 +345,19 @@ Drink_World :: struct {
 }
 
 Sleep :: struct {}
-// sleep cannot be canceled, the entity should be awakened for world activity (loud sounds, other entity, etc)
+// sleep cannot (shouldnt) be canceled, the entity should be awakened for world activity (loud sounds, other entity, etc)
 
 Social_Positive :: struct {
 	entity_id: int,
 	init: bool,
 	is_auto: bool,
 	ticks_to_end: int,
+}
+
+PickItem :: struct {
+	init: bool,
+	target_pos: vec3i, 
+	item: Item
 }
 
 add_task :: proc(ent: ^Entity, task: Task) {
@@ -405,6 +409,11 @@ init_task :: proc(ent: ^Entity, task: Task) {
 
 			set_entity_target_pos(ent, adyacent_pos, false)
 			t.init = true
+
+		case PickItem: 
+			set_entity_target_pos(ent, t.target_pos, false)
+			t.init = true
+
 	}
 }
 
@@ -436,7 +445,7 @@ execute_task :: proc(ent: ^Entity, task: Task) {
 				plant.calories -= 200
 				ent.food += 200
 
-				if plant.calories == 0 {
+				if plant.calories <= 0 {
 					delete_plant_world(t.target_pos)
 					ordered_remove(&ent.tasks, 0)
 
@@ -536,6 +545,17 @@ execute_task :: proc(ent: ^Entity, task: Task) {
 					case:
 						fmt.println("waiting to entity")
 				}
+			}
+
+		case PickItem: 
+			if t.init == false {
+				init_task(ent, task)
+			}
+
+			if walk_entity(ent) {
+				put_item_on_entity_inventory(t.item, ent)
+				remove_item_in_terrain_cell(t.item, t.target_pos)
+				ordered_remove(&ent.tasks, 0)
 			}
 	}
 }
@@ -727,3 +747,62 @@ get_visual_instance_for_entity :: proc(species: Species) -> VisualInstance {
 
 	return new_visual_instance
 }
+
+// -------------------------------- Inventory tools ---------------------------------------
+item_id_count: int = -1
+get_id_for_item :: proc() -> int {
+	item_id_count += 1
+	return item_id_count 
+}
+
+put_item_on_entity_inventory :: proc(item: Item, ent: ^Entity) -> bool {
+	for body_part, &slot in ent.inventory {
+		#partial switch itm in &slot {
+			case NullItem:
+				fmt.println("Item Placed in inventory")
+				slot = item
+				return true
+
+			case Item:
+				continue
+		}
+	}
+
+	fmt.println("Can't place item in inventory")
+	return false
+}
+
+remove_item_from_entity_inventory :: proc(item_id: int, ent: ^Entity) {
+	for body_part, &slot in ent.inventory {
+		#partial switch itm in slot {
+			case NullItem: 
+			case Item:
+				if itm.id == item_id {
+					slot = NullItem{}
+				}
+		}
+	}
+}
+
+create_item :: proc(game_model: ^GameModel, name: string) -> Item {
+	new_item: Item = {
+		get_id_for_item(),
+		{
+			game_model,
+			0
+		},
+		name,
+		{entity_drop_item}
+	}
+	return new_item
+}
+
+// Items Options
+entity_drop_item :: proc(ent: ^Entity, item: Item) {
+	remove_item_from_entity_inventory(item.id, ent)
+	put_item_in_terrain_cell(
+		create_item(item.visual_instance.game_model, item.name), 
+		ent.pos
+	)
+}
+

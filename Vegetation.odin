@@ -44,7 +44,7 @@ carrot_data: PlantData = {
 	stages = {
 		{stage_type=SeedStage{}, init=false, calories=0, to_end_stage=100},
 		{stage_type=SproutStage{}, init=false, calories=0, to_end_stage=50},
-		{stage_type=VeggieStage{0, 200}, init=false, calories=400, to_end_stage=1000},
+		{stage_type=VeggieStage{0, 600}, init=false, calories=400, to_end_stage=1000},
 	}
 }
 
@@ -109,44 +109,13 @@ seeding_dirs: [8]vec3i = {
 
 update_plants :: proc() {
 	for key_pos, &plant in plants {
-		control_plant_stages(&plant)
-		// plant.grow += 1 
-
-		// if plant.grow > 0 && plant.grow < 100 {
-		// 	// fmt.println("Seed state")
-		// } else if plant.grow > 100 && plant.grow < 200 {
-		// 	// fmt.println("Sprout State")
-		// } else if plant.grow >= 200 && plant.grow < 300 {
-		// 	// fmt.println("Veggie State")
-		// 	if plant.grow == 200 {
-		// 		append(&edible_plants, key_pos)
-		// 	}
-		// } else if plant.grow > 300 && plant.grow < plant.data.max_grow {
-		// 	if plant.grow == 301 {
-		// 		plant.seeding = true
-		// 	}
-
-		// 	// fmt.println("Seeding State")
-		// 	for dir in seeding_dirs {
-		// 		this_pos := key_pos + dir
-		// 		this_pos_2d: vec2i = {this_pos.x, this_pos.z}
-
-		// 		if this_pos_2d in terrain && this_pos not_in plants && plant.seeding && get_validation_plant_in_pos(plant.data, this_pos) {
-		// 			plant.seeding = false
-		// 			patch_behavior(this_pos, plant.data, 5)
-		// 			// create_plant_world(this_pos, plant.data)
-		// 			fmt.println("Vegetation/85: Planted")
-		// 			return
-		// 		}
-		// 	}
-		// } else if plant.grow > plant.data.max_grow{
-		// 	delete_plant_world(key_pos)
-		// }
+		control_plant_stages(&plant, key_pos)
 	}
 }
 
-control_plant_stages :: proc(plant: ^PlantInstance) {
+control_plant_stages :: proc(plant: ^PlantInstance, pos: vec3i) {
 	plant.grow += 1
+	fmt.println(plant.grow)
 
 	// Forward Stage
 	if plant.grow >= plant.stages[0].to_end_stage {
@@ -154,21 +123,48 @@ control_plant_stages :: proc(plant: ^PlantInstance) {
 		ordered_remove(&plant.stages, 0)
 	}
 
-	#partial switch stage in plant.stages[0].stage_type {
+	if len(plant.stages) == 0 {
+		delete_plant_world(pos)
+		return
+	}
+
+	#partial switch &stage_type in plant.stages[0].stage_type {
 		case SeedStage:
-			fmt.println("I am on Seed Stage")
+			// fmt.println("I am on Seed Stage")
 
 		case SproutStage:
-			fmt.println("I am on Sprout Stage")
+			// fmt.println("I am on Sprout Stage")
 
 		case VeggieStage:
-			fmt.println("I am on Veggie Stage")
+			// fmt.println("I am on Veggie Stage")
+
+			if plant.stages[0].init == false {
+				plant.stages[0].init = true
+				append(&edible_plants, pos)
+			}
+
+			stage_type.veggie_grow += 1
+			fmt.println(stage_type.veggie_grow)
+
+			if stage_type.veggie_grow >= stage_type.to_grow_veggie {
+				stage_type.veggie_grow = 0
+
+				for dir in seeding_dirs {
+					this_pos := pos + dir
+					this_pos_2d: vec2i = {this_pos.x, this_pos.z}
+
+					if this_pos_2d in terrain && this_pos not_in plants && get_validation_plant_in_pos(plant.data, this_pos) {
+						patch_behavior(this_pos, plant.data, 5, 25, 7)
+						return
+					}
+				}
+			}
 
 		case:
 			break
 	}
 
-	fmt.println("========================================================")
+	// fmt.println("========================================================")
 }
 
 repel_plant :: proc(radius: f32, plant_pos: vec3i) -> bool {
@@ -198,10 +194,7 @@ patch_behavior :: proc(center: vec3i, p_data: ^PlantData, limit: int, repel_radi
 
 	visited_pos: map[vec3i]bool
 
-	// repel_radius: f32 = 25
-	// plant_radius: f32 =	7 
-
-	patch_limit: int = limit // if want 3, place a 4
+	patch_limit: int = limit
 
 	count: int = 0
 
@@ -309,12 +302,12 @@ init_some_plants :: proc() {
 
 		if get_validation_plant_in_pos(&carrot_data, pos) && count < positions {
 
-			patch_behavior(pos, &carrot_data, 2, 25, 7)
+			patch_behavior(pos, &carrot_data, 4, 25, 7)
 			count += 1
 		}
 	}	
 
-	positions = 3
+	positions = 2 
 	count = 0
 
 	// plant some Long Grass
@@ -338,7 +331,7 @@ draw_plants :: proc() {
 	for key_pos, &plant in plants {
 		draw_visual_instance(&plant.visual_instance, key_pos)
 
-		rl.DrawCubeWiresV(to_v3(to_visual_world(key_pos)) + {0.5, 0.5, 0.5}, {1, 1, 1}, rl.ORANGE)	
+		// rl.DrawCubeWiresV(to_v3(to_visual_world(key_pos)) + {0.5, 0.5, 0.5}, {1, 1, 1}, rl.ORANGE)	
 	}
 }
 

@@ -92,7 +92,7 @@ update_pointer_mode :: proc() {
 			fmt.println(plants[pointer_pos])
 		}
 
-		fmt.println(pointer_pos)
+		fmt.println(get_current_entity().inventory)
 	}
 
 	// right click options

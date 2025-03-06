@@ -1,0 +1,1 @@
+Items con nombres variantes por ejemplo variables de: "Rock" pueden ser "A Rock", "The Rock", "One Rock". Esto para dar personalidad y un sentimiento de cercania a los items. No se si este cree confusion para el sistema de crafing.
