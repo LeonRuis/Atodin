@@ -115,7 +115,7 @@ update_plants :: proc() {
 
 control_plant_stages :: proc(plant: ^PlantInstance, pos: vec3i) {
 	plant.grow += 1
-	fmt.println(plant.grow)
+	// fmt.println(plant.grow)
 
 	// Forward Stage
 	if plant.grow >= plant.stages[0].to_end_stage {

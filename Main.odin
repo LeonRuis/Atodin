@@ -18,7 +18,7 @@ camera3: rl.Camera = {
 
 Wall :: struct {
 	model: rl.Model,
-	pos: vec3
+	pos: vec3,
 	rot: f32 
 }
 ////
@@ -28,6 +28,7 @@ main :: proc() {
 	rl.InitWindow(1400, 750, "Atalay")
 	rl.DisableCursor()
 	rl.SetExitKey(.BACKSPACE)
+	set_borderles_window()
 
 	load_textures_and_models()
 	defer unload_textures_and_models()
@@ -75,7 +76,6 @@ main :: proc() {
 			}
 		}
 
-
 			//// Inputs
 		if rl.IsKeyReleased(.F) {
 			if gamemode == .POINTER {
@@ -86,7 +86,8 @@ main :: proc() {
 		}
 
 		//// Gui Modes 
-		if rl.IsKeyReleased(.TAB) {
+			// Pointer-GUI
+		if rl.IsKeyReleased(.LEFT_SHIFT) {
 			if gamemode == .GUI {
 				set_mode(.POINTER)
 			} else {
@@ -94,12 +95,14 @@ main :: proc() {
 			}
 		}
 
+			// Right Click
 		if rl.IsKeyReleased(.U) {
 			if gamemode == .RIGHT_CLICK {
 				set_mode(.POINTER)
 			}
 		}
 
+			// Pause 
 		if rl.IsKeyReleased(.ESCAPE) {
 			if gamemode == .PAUSE_GUI {
 				set_mode(.POINTER)
@@ -108,11 +111,18 @@ main :: proc() {
 			}
 		}
 
+			// GUI
+		if rl.IsKeyReleased(.TAB) {
+
+		}
+
+			// Deselect Entity, this erase entity GUI
 		if rl.IsKeyReleased(.N) {
 			current_entity = -1
 		}
 
-		if rl.IsKeyReleased(.I) {
+
+		if rl.IsKeyReleased(.TAB) {
 			view_inventory = !view_inventory
 		}
 
@@ -121,12 +131,10 @@ main :: proc() {
 			rl.ClearBackground(rl.SKYBLUE)
 
 			rl.BeginMode3D(camera3)
-				//##
 				draw_entities()
-				//##
 				update_pointer()
 
-					//// Modes Update
+				//// Modes Update
 				update_mode()
 
 				draw_world_terrain()
@@ -148,7 +156,7 @@ main :: proc() {
 
 			rl.EndMode3D()
 
-				//// GUIS
+			//// GUIS
 			if gamemode == .GUI {
 				menu_modes()
 			}

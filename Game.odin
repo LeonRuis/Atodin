@@ -24,8 +24,6 @@ current_plant: ^PlantInstance
 //##
 
 set_mode :: proc(mode: GameMode) {
-	gamemode = mode
-
 	#partial switch mode {
 		case .POINTER:
 			rl.DisableCursor()
@@ -60,8 +58,10 @@ set_mode :: proc(mode: GameMode) {
 			in_gui = true
 
 		case:
-			return
+			rl.CloseWindow()
 	}
+
+	gamemode = mode
 }
 
 update_mode :: proc() {
@@ -82,21 +82,16 @@ update_mode :: proc() {
 
 ////-----------------------------------------------------------------------------------------------------
 update_pointer_mode :: proc() {
-	if rl.IsMouseButtonReleased(.LEFT) {
+
+	if rl.IsMouseButtonReleased(.LEFT) && current_entity > -1{
 		// select entity
 		if world[pointer_pos].entity_id != -1 {
 			current_entity = world[pointer_pos].entity_id
 		}
-
-		if pointer_pos in plants {
-			fmt.println(plants[pointer_pos])
-		}
-
-		fmt.println(get_current_entity().inventory)
 	}
 
 	// right click options
-	if rl.IsMouseButtonReleased(.RIGHT) {
+	if rl.IsMouseButtonReleased(.RIGHT) && current_entity > -1 {
 		set_mode(.RIGHT_CLICK)
 	}
 

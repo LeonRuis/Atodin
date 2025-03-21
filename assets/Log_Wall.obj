@@ -1,19 +1,19 @@
 mtllib material.mtl
 o Default
-v 1 0 0
-v 1 2 0
-v 0 2 0
 v 0 0 0
-v 0 0 0
-v 1 2 0
 v 0 2 0
+v 1 2 0
 v 1 0 0
-vt 0.6666666865348816 0
+v 1 0 0
+v 0 2 0
+v 1 2 0
+v 0 0 0
+vt 0.6666666865348816 0.5
 vt 1 1
 vt 0.6666666865348816 1
-vt 1 0
-vn 0 0 -1
+vt 1 0.5
 vn 0 0 1
+vn 0 0 -1
 g Log Wall
 usemtl 1
 f 1/1/1 3/2/1 2/3/1

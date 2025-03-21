@@ -142,6 +142,10 @@ menu_right_click :: proc() {
 		}
 	}
 
+	if len(terrain_cell.items) > 1 {
+		fmt.println("open pile inventory")
+	}
+
 	control_buttons(&menu_buttons, menu_rect)
 }
 
@@ -337,7 +341,7 @@ get_task_title :: proc(task: Task) -> cstring {
 }
 
 //---------------- Pause GUI --------------------------------------
-in_borderless: bool = false
+in_borderless: bool = false 
 pause_gui :: proc() {
 	rect: rl.Rectangle = {
 		0,
@@ -355,16 +359,20 @@ pause_gui :: proc() {
 
 	rl.GuiLabel(rect, "This is the Pause Menu")
 	if rl.GuiButton(btn_rect, "Borderless Window") {
-		rl.ToggleBorderlessWindowed()
-		if in_borderless {
-			WINDOW_WIDTH = 1400
-			WINDOW_HEIGHT = 750 
-		} else {
-			WINDOW_WIDTH = f32(rl.GetMonitorWidth(1))
-			WINDOW_HEIGHT = f32(rl.GetMonitorHeight(1))
-		}
-		in_borderless = !in_borderless
+		set_borderles_window()
 	}
+}
+
+set_borderles_window :: proc() {
+	rl.ToggleBorderlessWindowed()
+	if in_borderless {
+		WINDOW_WIDTH = 1400
+		WINDOW_HEIGHT = 750 
+	} else {
+		WINDOW_WIDTH = f32(rl.GetMonitorWidth(1))
+		WINDOW_HEIGHT = f32(rl.GetMonitorHeight(1))
+	}
+		in_borderless = !in_borderless
 }
 
 //---------------- Other guis -------------------------------------

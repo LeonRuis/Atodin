@@ -91,8 +91,8 @@ rand_ :: proc() -> vec3i {
 test_init_rats :: proc() {
 	// spawn_entity(rand_(), true, rl.BLUE, "Pinnaple", .RAT)
 	// spawn_entity(rand_(), false, rl.ORANGE, "Carrot", .RAT)
-	spawn_entity(rand_(), true, rl.PINK, "Elten", .HUMAN)
-	spawn_entity(rand_(), true, rl.PINK, "Totl", .HUMAN)
+	spawn_entity(rand_(), true, rl.BLUE, "Elten", .HUMAN)
+	spawn_entity(rand_(), false, rl.PINK, "Totl", .HUMAN)
 }
 //##
 
@@ -495,18 +495,21 @@ execute_task :: proc(ent: ^Entity, task: Task) {
 
 						if walk_entity(ent) {
 							if t.ticks_to_end > 0 {
+								ent.social += 120 
 
-								if ent.social < ent.social_max {
-									ent.social += 120 
+								if ent.social > ent.social_max {
+									ent.social = ent.social_max
 								}
 
-								if get_entity_from_id(t.entity_id).social < get_entity_from_id(t.entity_id).social_max {
-									get_entity_from_id(t.entity_id).social += 120 
+								get_entity_from_id(t.entity_id).social += 120 
+
+								if get_entity_from_id(t.entity_id).social > get_entity_from_id(t.entity_id).social_max {
+									get_entity_from_id(t.entity_id).social = get_entity_from_id(t.entity_id).social_max
 								}
 
 								if ent.species == get_entity_from_id(t.entity_id).species {
-									ent.mating += 1 
-									get_entity_from_id(t.entity_id).mating += 2 
+									ent.mating += 4
+									get_entity_from_id(t.entity_id).mating += 4
 								}
 
 								t.ticks_to_end -= 2 
@@ -530,7 +533,7 @@ execute_task :: proc(ent: ^Entity, task: Task) {
 
 									if pregnant.mating >= pregnant.mating_max {
 										fmt.println("child ==========================================")
-										spawn_entity(rand_(), false, rl.ORANGE, "valid Child", .RAT)
+										spawn_entity(rand_(), false, rl.ORANGE, "valid Child", pregnant.species)
 									}
 								}
 							}
