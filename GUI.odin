@@ -170,7 +170,7 @@ pressed_sleep :: proc() {
 }
 
 pressed_positive_social :: proc() {
-	add_task(get_current_entity(), Social_Positive{social_entity, false, false, 10})
+	add_task(get_current_entity(), Social_Pos{social_entity, pick_task_pair_id(), false})
 	set_mode(.POINTER)
 }
 
@@ -327,8 +327,8 @@ get_task_title :: proc(task: Task) -> cstring {
 		case Sleep: 
 			return "Sleep"
 
-		case Social_Positive: 
-			str: string = strings.concatenate({"Social With ", get_entity_from_id(t.entity_id).name})
+		case Social_Pos: 
+			str: string = strings.concatenate({"Social With ", get_entity_from_id(t.entity_target_id).name})
 			return strings.clone_to_cstring(str) 
 
 		case PickItem:

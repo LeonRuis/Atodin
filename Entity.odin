@@ -264,25 +264,25 @@ update_entity :: proc(ent: ^Entity) {
 	}
 
 	// Auto Social
-	for task in ent.tasks {
-		#partial switch t in task {
-			case Social_Positive:
-				return
-		}
-	} 
+	// for task in ent.tasks {
+	// 	#partial switch t in task {
+	// 		case Social_Positive:
+	// 			return
+	// 	}
+	// } 
 
-	if ent.social < ent.social_max / 2 {
-		if len(entities) > 1 {
-			for ind, social_ent in entities {
-				if social_ent.id == ent.id {
-					continue
-				}
+	// if ent.social < ent.social_max / 2 {
+	// 	if len(entities) > 1 {
+	// 		for ind, social_ent in entities {
+	// 			if social_ent.id == ent.id {
+	// 				continue
+	// 			}
 
-				add_task(ent, Social_Positive{social_ent.id, false, false, 10})
-				return
-			}
-		}
-	}
+	// 			add_task(ent, Social_Positive{social_ent.id, false, false, 10})
+	// 			return
+	// 		}
+	// 	}
+	// }
 }
 
 set_entity_target_pos :: proc(ent: ^Entity, tar: vec3i, adyacent: bool) {
@@ -324,7 +324,7 @@ Task :: union {
 	Eat_Plant,
 	Drink_World,
 	Sleep,
-	Social_Positive,
+	Social_Pos,
 	PickItem
 }
 
@@ -347,11 +347,23 @@ Drink_World :: struct {
 Sleep :: struct {}
 // sleep cannot (shouldnt) be canceled, the entity should be awakened for world activity (loud sounds, other entity, etc)
 
-Social_Positive :: struct {
-	entity_id: int,
-	init: bool,
-	is_auto: bool,
-	ticks_to_end: int,
+// 	entity_id: int,
+// 	init: bool,
+// 	is_auto: bool,
+// 	ticks_to_end: int,
+// Social_Positive :: struct {
+// }
+
+Social_Pos :: struct {
+	entity_target_id: int,
+	task_pair_id: int,
+	is_target: bool, 
+}
+
+current_task_pair_id: int = -1
+pick_task_pair_id :: proc() -> int {
+	current_task_pair_id += 1	
+	return current_task_pair_id
 }
 
 PickItem :: struct {
@@ -373,9 +385,9 @@ add_task :: proc(ent: ^Entity, task: Task) {
 	}
 
 	#partial switch t in task {
-		case Social_Positive:
-			if !t.is_auto {
-				add_task(get_entity_from_id(t.entity_id), Social_Positive{ent.id, true, true, 10})
+		case Social_Pos:
+			if !t.is_target {
+				add_task(get_entity_from_id(t.entity_target_id), Social_Pos{ent.id, t.task_pair_id, true})
 			}
 	}
 
@@ -418,7 +430,7 @@ init_task :: proc(ent: ^Entity, task: Task) {
 }
 
 execute_task :: proc(ent: ^Entity, task: Task) {
-	switch &t in task {
+	#partial switch &t in task {
 		case Move_To:
 			if t.init == false {
 				init_task(ent, task)
@@ -475,80 +487,80 @@ execute_task :: proc(ent: ^Entity, task: Task) {
 				ordered_remove(&ent.tasks, 0)
 			}
 
-		case Social_Positive:
-			if !t.is_auto {
-				#partial switch &t_social in get_entity_from_id(t.entity_id).tasks[0] {
-					case Social_Positive:
-						if t_social.entity_id != ent.id {
-							return
-						}
+		// case Social_Positive:
+		// 	if !t.is_auto {
+		// 		#partial switch &t_social in get_entity_from_id(t.entity_id).tasks[0] {
+		// 			case Social_Positive:
+		// 				if t_social.entity_id != ent.id {
+		// 					return
+		// 				}
 
-						if !t.init {
-							init_task(ent, task)
-							set_entity_target_pos(
-								ent,
-								get_entity_from_id(t.entity_id).pos,
-								true
-							)
-							t.init = true
-						}
+		// 				if !t.init {
+		// 					init_task(ent, task)
+		// 					set_entity_target_pos(
+		// 						ent,
+		// 						get_entity_from_id(t.entity_id).pos,
+		// 						true
+		// 					)
+		// 					t.init = true
+		// 				}
 
-						if walk_entity(ent) {
-							if t.ticks_to_end > 0 {
-								ent.social += 120 
+		// 				if walk_entity(ent) {
+		// 					if t.ticks_to_end > 0 {
+		// 						ent.social += 120 
 
-								if ent.social > ent.social_max {
-									ent.social = ent.social_max
-								}
+		// 						if ent.social > ent.social_max {
+		// 							ent.social = ent.social_max
+		// 						}
 
-								get_entity_from_id(t.entity_id).social += 120 
+		// 						get_entity_from_id(t.entity_id).social += 120 
 
-								if get_entity_from_id(t.entity_id).social > get_entity_from_id(t.entity_id).social_max {
-									get_entity_from_id(t.entity_id).social = get_entity_from_id(t.entity_id).social_max
-								}
+		// 						if get_entity_from_id(t.entity_id).social > get_entity_from_id(t.entity_id).social_max {
+		// 							get_entity_from_id(t.entity_id).social = get_entity_from_id(t.entity_id).social_max
+		// 						}
 
-								if ent.species == get_entity_from_id(t.entity_id).species {
-									ent.mating += 4
-									get_entity_from_id(t.entity_id).mating += 4
-								}
+		// 						if ent.species == get_entity_from_id(t.entity_id).species {
+		// 							ent.mating += 4
+		// 							get_entity_from_id(t.entity_id).mating += 4
+		// 						}
 
-								t.ticks_to_end -= 2 
-							}
+		// 						t.ticks_to_end -= 2 
+		// 					}
 
-							if t.ticks_to_end <= 0 {
-								delete_task(ent, task)
+		// 					if t.ticks_to_end <= 0 {
+		// 						delete_task(ent, task)
 
-								pregnant_id: int = -1
-								pregnant: ^Entity = {}
-								if ent.gender && !get_entity_from_id(t.entity_id).gender {
-									pregnant_id = t.entity_id 
-								}
+		// 						pregnant_id: int = -1
+		// 						pregnant: ^Entity = {}
+		// 						if ent.gender && !get_entity_from_id(t.entity_id).gender {
+		// 							pregnant_id = t.entity_id 
+		// 						}
 
-								if !ent.gender && get_entity_from_id(t.entity_id).gender {
-									pregnant_id = ent.id
-								}
+		// 						if !ent.gender && get_entity_from_id(t.entity_id).gender {
+		// 							pregnant_id = ent.id
+		// 						}
 
-								if pregnant_id != -1 {
-									pregnant = get_entity_from_id(pregnant_id)
+		// 						if pregnant_id != -1 {
+		// 							pregnant = get_entity_from_id(pregnant_id)
 
-									if pregnant.mating >= pregnant.mating_max {
-										fmt.println("child ==========================================")
-										spawn_entity(rand_(), false, rl.ORANGE, "valid Child", pregnant.species)
-									}
-								}
-							}
+		// 							if pregnant.mating >= pregnant.mating_max {
+		// 								fmt.println("child ==========================================")
+		// 								spawn_entity(rand_(), false, rl.ORANGE, "valid Child", pregnant.species)
+		// 							}
+		// 						}
+		// 					}
 
 
-							/*
-							Interacciones sociales deben generar una reaccion, por ejemplo: una interacion positiva puede dar puntos de mating, una interaccion negativa puede hacer la entidad huir.
-							esto es por que a veces alguna entidad, digase rata, puede interactuar con otra de otro tipo, digase perro. Diferentes factores resultaran en diferentes outputs negativos y positivos.
-							*/
-						}
+		// 					/*
+		// 					Interacciones sociales deben generar una reaccion, por ejemplo: una interacion positiva puede dar puntos de mating, una interaccion negativa puede hacer la entidad huir.
+		// 					esto es por que a veces alguna entidad, digase rata, puede interactuar con otra de otro tipo, digase perro. Diferentes factores resultaran en diferentes outputs negativos y positivos.
+		// 					*/
+		// 				}
 
-					case:
-						fmt.println("waiting to entity")
-				}
-			}
+		// 			case:
+		// 				fmt.println("waiting to entity")
+		// 		}
+		// 	}
 
 		case PickItem: 
 			if t.init == false {
@@ -565,9 +577,9 @@ execute_task :: proc(ent: ^Entity, task: Task) {
 
 delete_task :: proc(ent: ^Entity, task: Task) {
 	#partial switch t in task {
-		case Social_Positive:
-			ordered_remove(&ent.tasks, 0)
-			ordered_remove(&get_entity_from_id(t.entity_id).tasks, 0)
+		case Social_Pos:
+			// ordered_remove(&ent.tasks, 0)
+			// ordered_remove(&get_entity_from_id(t.entity_id).tasks, 0)
 
 		case:
 			return

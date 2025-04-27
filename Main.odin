@@ -30,7 +30,6 @@ main :: proc() {
 	rl.SetExitKey(.BACKSPACE)
 	set_borderles_window()
 
-	init_lighting()
 	load_textures_and_models()
 	defer unload_textures_and_models()
 
@@ -127,13 +126,10 @@ main :: proc() {
 			view_inventory = !view_inventory
 		}
 
-		rl.SetShaderValue(shader, shader.locs[rl.ShaderLocationIndex.VECTOR_VIEW], &camera3.position, .VEC3)
 		rl.BeginDrawing()
 			rl.ClearBackground(rl.SKYBLUE)
 
 			rl.BeginMode3D(camera3)
-				rl.DrawSphere(light.position, 0.4, light.color)
-				// rl.BeginShaderMode(light_shader)	
 
 					draw_entities()
 					update_pointer()
@@ -157,7 +153,6 @@ main :: proc() {
 								rl.WHITE)
 						}
 					}
-				// rl.EndShaderMode()
 			rl.EndMode3D()
 
 			//// GUIS
