@@ -89,8 +89,8 @@ rand_ :: proc() -> vec3i {
 }
 
 test_init_rats :: proc() {
-	// spawn_entity(rand_(), true, rl.BLUE, "Pinnaple", .RAT)
-	// spawn_entity(rand_(), false, rl.ORANGE, "Carrot", .RAT)
+	spawn_entity(rand_(), true, rl.BLUE, "Pinnaple", .RAT)
+	spawn_entity(rand_(), false, rl.ORANGE, "Carrot", .RAT)
 	spawn_entity(rand_(), true, rl.BLUE, "Elten", .HUMAN)
 	spawn_entity(rand_(), false, rl.PINK, "Totl", .HUMAN)
 }

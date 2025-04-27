@@ -11,11 +11,11 @@ Tile :: enum {
 }
 
 CHUNK_SIZE :: vec3i{50, 10, 50}
-seed: i64// = 799
+seed: i64 = 799
 scale: f64 = 0.01
 
 generate_world_terrain :: proc() {
-	seed = i64(rand.int31())
+	// seed = i64(rand.int31())
 	temp_seed := i64(rand.int31())
 	moist_seed := i64(rand.int31())
 

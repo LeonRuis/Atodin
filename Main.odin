@@ -30,6 +30,7 @@ main :: proc() {
 	rl.SetExitKey(.BACKSPACE)
 	set_borderles_window()
 
+	init_lighting()
 	load_textures_and_models()
 	defer unload_textures_and_models()
 
@@ -126,34 +127,37 @@ main :: proc() {
 			view_inventory = !view_inventory
 		}
 
-
+		rl.SetShaderValue(shader, shader.locs[rl.ShaderLocationIndex.VECTOR_VIEW], &camera3.position, .VEC3)
 		rl.BeginDrawing()
 			rl.ClearBackground(rl.SKYBLUE)
 
 			rl.BeginMode3D(camera3)
-				draw_entities()
-				update_pointer()
+				rl.DrawSphere(light.position, 0.4, light.color)
+				// rl.BeginShaderMode(light_shader)	
 
-				//// Modes Update
-				update_mode()
+					draw_entities()
+					update_pointer()
 
-				draw_world_terrain()
-				// Draw plants
-				draw_plants()
+					//// Modes Update
+					update_mode()
 
-				// Draw Walls
-				for key_pos, &cell in world {
-					for &wall in cell.walls {
-						rl.DrawModelEx(
-							wall.model, 
-							wall.pos * {1, 2, 1},
-							{0, 1, 0},
-							wall.rot,
-							{1, 1, 1},
-							rl.WHITE)
+					draw_world_terrain()
+					// Draw plants
+					draw_plants()
+
+					// Draw Walls
+					for key_pos, &cell in world {
+						for &wall in cell.walls {
+							rl.DrawModelEx(
+								wall.model, 
+								wall.pos * {1, 2, 1},
+								{0, 1, 0},
+								wall.rot,
+								{1, 1, 1},
+								rl.WHITE)
+						}
 					}
-				}
-
+				// rl.EndShaderMode()
 			rl.EndMode3D()
 
 			//// GUIS
