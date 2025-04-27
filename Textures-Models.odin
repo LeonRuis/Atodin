@@ -81,7 +81,7 @@ carrots_model: rl.Model
 
 long_grass_texture: rl.Texture
 long_grass_model: rl.Model
-discard_alpha_shader: rl.Shader
+shader: rl.Shader
 
 rock_texture: rl.Texture
 rock_model: rl.Model
@@ -92,18 +92,23 @@ load_textures_and_models :: proc() {
 
 	grass_model = rl.LoadModel("assets/Grass.obj")
 	grass_model.materials[0].maps[0].texture = terrain_atlas_texture
+	grass_model.materials[0].shader = light_shader 
 
 	sand_model = rl.LoadModel("assets/Sand.obj")
 	sand_model.materials[0].maps[0].texture = terrain_atlas_texture
+	sand_model.materials[0].shader = light_shader 
 
 	water_model = rl.LoadModel("assets/Water.obj")
 	water_model.materials[0].maps[0].texture = terrain_atlas_texture
+	water_model.materials[0].shader = light_shader 
 
 	wall_model = rl.LoadModel("assets/Log_Wall.obj")
 	wall_model.materials[0].maps[0].texture = terrain_atlas_texture
+	wall_model.materials[0].shader = light_shader 
 
 	grass_wall_model = rl.LoadModel("assets/Grass_Wall.obj")
 	grass_wall_model.materials[0].maps[0].texture = terrain_atlas_texture
+	grass_model.materials[0].shader = light_shader 
 
 	// Individual
 	load_pair_texture_model(&male_texture, &male_model, "assets/Male_texture.png", "assets/Male_object.obj")
@@ -113,8 +118,9 @@ load_textures_and_models :: proc() {
 	load_pair_texture_model(&rock_texture, &rock_model, "assets/Rock.png", "assets/Rock.obj")
 
 	load_pair_texture_model(&long_grass_texture, &long_grass_model, "assets/Long Grass.png", "assets/Long Grass.obj")
-	discard_alpha_shader = rl.LoadShader(nil, "assets/discard_alpha.fs")
-	long_grass_model.materials[0].shader = discard_alpha_shader 
+	shader = rl.LoadShader(nil, "assets/discard_alpha.fs")
+	long_grass_model.materials[0].shader = shader
+	long_grass_model.materials[1].shader = light_shader
 }
 
 unload_textures_and_models :: proc() {
