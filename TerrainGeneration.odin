@@ -16,8 +16,8 @@ scale: f64 = 0.01
 
 generate_world_terrain :: proc() {
 	// seed = i64(rand.int31())
-	temp_seed := i64(rand.int31())
-	moist_seed := i64(rand.int31())
+	temp_seed  := seed // i64(rand.int31())
+	moist_seed := seed // i64(rand.int31())
 
 	// fmt.println(seed, temp_seed, moist_seed)
 	for x in 0..<CHUNK_SIZE.x {
@@ -155,6 +155,7 @@ put_item_in_terrain_cell :: proc(item: Item, pos: vec3i) {
 	cell := &terrain[pos2d]
 
 	if cell.floor_height != pos.y {
+		fmt.println("no cell")
 		return
 	}
 

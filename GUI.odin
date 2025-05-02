@@ -15,7 +15,7 @@ Label :: struct {
 	text: cstring,
 }
 
-//----------------- Menu Modes ------------------------------------------------------
+// Modes ------------------------------------------------------
 menu_modes :: proc() {
 	menu_title: cstring = "Select Mode..."
 
@@ -63,7 +63,7 @@ pressed_pointer :: proc() {
 	set_mode(.POINTER)
 }
 
-//----------------- Right Mouse Options ---------------------------------------
+// Right Mouse Options ---------------------------------------
 right_click_mode_pos: vec2
 
 menu_right_click :: proc() {
@@ -82,105 +82,117 @@ menu_right_click :: proc() {
 		pressed_move_here,
 	}
 
-	btn_eat_plant: Button = {
-		"Eat Plant",
-		pressed_eat_plant,
-	}
+	// btn_eat_plant: Button = {
+	// 	"Eat Plant",
+	// 	pressed_eat_plant,
+	// }
 
-	btn_drink_world: Button = {
-		"Drink From Source",
-		pressed_drink_world,
-	}
+	// btn_drink_world: Button = {
+	// 	"Drink From Source",
+	// 	pressed_drink_world,
+	// }
 
-	btn_sleep: Button = {
-		"Sleep",
-		pressed_sleep,
-	}
+	// btn_sleep: Button = {
+	// 	"Sleep",
+	// 	pressed_sleep,
+	// }
 
-	btn_positive_social: Button = {
-		"Social +",
-		pressed_positive_social,
-	}
+	// btn_positive_social: Button = {
+	// 	"Social +",
+	// 	pressed_positive_social,
+	// }
 
-	btn_pick_item: Button = {
-		"Pick",
-		pressed_pick_item,
-	}
+	// btn_pick_item: Button = {
+	// 	"Pick",
+	// 	pressed_pick_item,
+	// }
 
 	menu_buttons: [dynamic]Button
 
 	append(&menu_buttons, btn_move_here)
 
-	// Eat plant
-	if pointer_pos in plants && plants[pointer_pos].grow >= 200 {
-		append(&menu_buttons, btn_eat_plant)
-	} 
+	// // Eat plant
+	// if pointer_pos in plants && plants[pointer_pos].grow >= 200 {
+	// 	append(&menu_buttons, btn_eat_plant)
+	// } 
 
-	// Drink Source
-	if terrain[{pointer_pos.x, pointer_pos.z}].water_source {
-		append(&menu_buttons, btn_drink_world)
-	} 
+	// // Drink Source
+	// if terrain[{pointer_pos.x, pointer_pos.z}].water_source {
+	// 	append(&menu_buttons, btn_drink_world)
+	// } 
 
-	// Social +
-	if world[pointer_pos].entity_id != current_entity && world[pointer_pos].entity_id != -1 {
-		append(&menu_buttons, btn_positive_social)
-		social_entity = world[pointer_pos].entity_id
-	}
+	// // Social +
+	// if world[pointer_pos].entity_id != current_entity && world[pointer_pos].entity_id != -1 {
+	// 	append(&menu_buttons, btn_positive_social)
+	// 	social_entity = world[pointer_pos].entity_id
+	// }
 
-	// Selected entity Options
-	if get_current_entity().pos == pointer_pos {
-		append(&menu_buttons, btn_sleep)
-	}
+	// // Selected entity Options
+	// if get_current_entity().pos == pointer_pos {
+	// 	append(&menu_buttons, btn_sleep)
+	// }
 
-	// Pick Item
-	terrain_cell := &terrain[{pointer_pos.x, pointer_pos.z}]
-	if len(terrain_cell.items) == 1 {
-		if pointer_pos.y == terrain_cell.floor_height {
-			item := terrain_cell.items[0]
-			btn_pick_item.title = strings.clone_to_cstring(strings.concatenate({"Pick ", item.name}))
-			append(&menu_buttons, btn_pick_item)
-		}
-	}
+	// // Pick Item
+	// terrain_cell := &terrain[{pointer_pos.x, pointer_pos.z}]
+	// if len(terrain_cell.items) == 1 {
+	// 	if pointer_pos.y == terrain_cell.floor_height {
+	// 		item := terrain_cell.items[0]
+	// 		btn_pick_item.title = strings.clone_to_cstring(strings.concatenate({"Pick ", item.name}))
+	// 		append(&menu_buttons, btn_pick_item)
+	// 	}
+	// }
 
-	if len(terrain_cell.items) > 1 {
-		fmt.println("open pile inventory")
-	}
+	// if len(terrain_cell.items) > 1 {
+	// 	fmt.println("open pile inventory")
+	// }
 
 	control_buttons(&menu_buttons, menu_rect)
 }
 
 pressed_move_here :: proc() {
-	add_task(get_current_entity(), Move_To{pointer_pos, false, false})
+	add_task(
+		get_current_entity(),
+		Task{
+			pick_task_id(),
+			false,
+			false,
+
+			Move_To{
+				pointer_pos
+			}
+		} 
+	)
 	set_mode(.POINTER)
 }
 
-pressed_eat_plant :: proc() {
-	add_task(get_current_entity(), Eat_Plant{false, pointer_pos})
-	set_mode(.POINTER)
-}
+// pressed_eat_plant :: proc() {
+// 	add_task(get_current_entity(), Eat_Plant{false, pointer_pos})
+// 	set_mode(.POINTER)
+// }
 
-pressed_drink_world :: proc() {
-	add_task(get_current_entity(), Drink_World{false, pointer_pos})
-	set_mode(.POINTER)
-}
+// pressed_drink_world :: proc() {
+// 	add_task(get_current_entity(), Drink_World{false, pointer_pos})
+// 	set_mode(.POINTER)
+// }
 
-pressed_sleep :: proc() {
-	add_task(get_current_entity(), Sleep{})
-	set_mode(.POINTER)
-}
+// pressed_sleep :: proc() {
+// 	add_task(get_current_entity(), Sleep{})
+// 	set_mode(.POINTER)
+// }
 
-pressed_positive_social :: proc() {
-	add_task(get_current_entity(), Social_Positive{social_entity, false, false, 10})
-	set_mode(.POINTER)
-}
+// pressed_positive_social :: proc() {
+// 	add_task(get_current_entity(), Social_Positive{social_entity, false, false, 10})
+// 	set_mode(.POINTER)
+// }
 
-pressed_pick_item :: proc() {
-	add_task(get_current_entity(), PickItem{false, pointer_pos, terrain[{pointer_pos.x, pointer_pos.z}].items[0]})
-	set_mode(.POINTER)
-}
+// pressed_pick_item :: proc() {
+// 	add_task(get_current_entity(), PickItem{false, pointer_pos, terrain[{pointer_pos.x, pointer_pos.z}].items[0]})
+// 	set_mode(.POINTER)
+// }
 
 social_entity: int = -1
-//-------------------------------------------------------------------------------
+
+// Entity -------------------------------------------------------------------------------
 entity_gui :: proc() {
 	// Data Display
 	menu_data_width: f32 = 200
@@ -306,7 +318,7 @@ entity_gui :: proc() {
 		} 
 		
 		if rl.GuiButton(btn_rect, get_task_title(task)) {
-			ordered_remove(&get_current_entity().tasks, i)
+			cancel_task(get_current_entity(), i)
 		}		
 	
 		btn_task_offset += 30
@@ -314,34 +326,35 @@ entity_gui :: proc() {
 }
 
 get_task_title :: proc(task: Task) -> cstring {
-	#partial switch t in task {
+	#partial switch type in task.type {
 		case Move_To:
 			return "Move To..."
 
-		case Eat_Plant: 
-			return "Eating Plant"
+		// case Eat_Plant: 
+		// 	return "Eating Plant"
 
-		case Drink_World:
-			return "Drink From Source"
+		// case Drink_World:
+		// 	return "Drink From Source"
 
-		case Sleep: 
-			return "Sleep"
+		// case Sleep: 
+		// 	return "Sleep"
 
-		case Social_Positive: 
-			str: string = strings.concatenate({"Social With ", get_entity_from_id(t.entity_id).name})
-			return strings.clone_to_cstring(str) 
+		// case Social_Positive: 
+		// 	str: string = strings.concatenate({"Social With ", get_entity_from_id(t.entity_id).name})
+		// 	return strings.clone_to_cstring(str) 
 
-		case PickItem:
-			str: string = strings.concatenate({"Picking ", t.item.name})
-			return strings.clone_to_cstring(str) 
+		// case PickItem:
+		// 	str: string = strings.concatenate({"Picking ", t.item.name})
+		// 	return strings.clone_to_cstring(str) 
 
 		case: 
 			return "Not Defined Task"
 	}
 }
 
-//---------------- Pause GUI --------------------------------------
+// Pause --------------------------------------
 in_borderless: bool = false 
+
 pause_gui :: proc() {
 	rect: rl.Rectangle = {
 		0,

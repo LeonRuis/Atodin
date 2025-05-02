@@ -170,119 +170,120 @@ update_entity :: proc(ent: ^Entity) {
 
 	// Task Flow Control
 	if len(ent.tasks) > 0 {
-		execute_task(ent, ent.tasks[0])
-	} else { 
-		ent.idle_tick_count += 1 
-	}
-
-	if ent.idle_tick_count == 7 {
-		add_task(ent, Move_To{rand_(), false, true})
-		ent.idle_tick_count = 0
-	}
-
-	// Auto food
-	if ent.food <= ent.food_max / 3 {
-
-		// Vision food
-		cost: int = 9999
-		pos: vec3i
-
-		for task in ent.tasks {
-			#partial switch t in task {
-				case Eat_Plant:
-					return	
-			}
-		} 
-
-		for key_pos in edible_plants {
-			current_cost := get_heuclidean(ent.pos, key_pos)
-
-			if current_cost < cost {
-				cost = current_cost
-				pos = key_pos
-			}
-		}
-
-		if cost < 50 {
-			add_task(ent, Eat_Plant{false, pos})
-		}
-	}
-
-	// Auto water
-	dirs: [4]vec3i = {
-		N,
-		S,
-		W,
-		E
-	}
-
-	if ent.water <= ent.water_max / 3 {
-		// Vision water 
-		cost: int = 9999
-		pos: vec3i
-
-		for task in ent.tasks {
-			#partial switch t in task {
-				case Drink_World:
-					return
-			}
-		} 
-
-		for key_pos, cell in terrain {
-			cell_pos: vec3i = {key_pos.x, cell.floor_height, key_pos.y}
-			current_cost := get_heuclidean(ent.pos, cell_pos)
-
-			if current_cost < 35 && cell.water_source {
-				for dir in neighbor_dirs {
-					this_neighbor := cell_pos + dir
-
-					if !terrain[{this_neighbor.x, this_neighbor.z}].water_source {
-						if current_cost < cost {
-							cost = current_cost
-							pos = cell_pos 
-						}
-					}
-				}
-			}
-		}
-
-		if cost < 35 {
-			add_task(ent, Drink_World{false, pos})
-		}
-	}
-
-	// Auto Sleep
-	for task in ent.tasks {
-		#partial switch t in task {
-			case Sleep:
-				return
-		}
+		execute_task(ent, &ent.tasks[0])
 	} 
+	// else { 
+	// 	ent.idle_tick_count += 1 
+	// }
 
-	if ent.sleep <= ent.sleep_max / 4 {
-		add_task(ent, Sleep{})
-	}
+	// if ent.idle_tick_count == 7 {
+	// 	add_task(ent, Move_To{rand_(), false, true})
+	// 	ent.idle_tick_count = 0
+	// }
 
-	// Auto Social
-	for task in ent.tasks {
-		#partial switch t in task {
-			case Social_Positive:
-				return
-		}
-	} 
+	// // Auto food
+	// if ent.food <= ent.food_max / 3 {
 
-	if ent.social < ent.social_max / 2 {
-		if len(entities) > 1 {
-			for ind, social_ent in entities {
-				if social_ent.id == ent.id {
-					continue
-				}
+	// 	// Vision food
+	// 	cost: int = 9999
+	// 	pos: vec3i
 
-				add_task(ent, Social_Positive{social_ent.id, false, false, 10})
-				return
-			}
-		}
-	}
+	// 	for task in ent.tasks {
+	// 		#partial switch t in task {
+	// 			case Eat_Plant:
+	// 				return	
+	// 		}
+	// 	} 
+
+	// 	for key_pos in edible_plants {
+	// 		current_cost := get_heuclidean(ent.pos, key_pos)
+
+	// 		if current_cost < cost {
+	// 			cost = current_cost
+	// 			pos = key_pos
+	// 		}
+	// 	}
+
+	// 	if cost < 50 {
+	// 		add_task(ent, Eat_Plant{false, pos})
+	// 	}
+	// }
+
+	// // Auto water
+	// dirs: [4]vec3i = {
+	// 	N,
+	// 	S,
+	// 	W,
+	// 	E
+	// }
+
+	// if ent.water <= ent.water_max / 3 {
+	// 	// Vision water 
+	// 	cost: int = 9999
+	// 	pos: vec3i
+
+	// 	for task in ent.tasks {
+	// 		#partial switch t in task {
+	// 			case Drink_World:
+	// 				return
+	// 		}
+	// 	} 
+
+	// 	for key_pos, cell in terrain {
+	// 		cell_pos: vec3i = {key_pos.x, cell.floor_height, key_pos.y}
+	// 		current_cost := get_heuclidean(ent.pos, cell_pos)
+
+	// 		if current_cost < 35 && cell.water_source {
+	// 			for dir in neighbor_dirs {
+	// 				this_neighbor := cell_pos + dir
+
+	// 				if !terrain[{this_neighbor.x, this_neighbor.z}].water_source {
+	// 					if current_cost < cost {
+	// 						cost = current_cost
+	// 						pos = cell_pos 
+	// 					}
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+
+	// 	if cost < 35 {
+	// 		add_task(ent, Drink_World{false, pos})
+	// 	}
+	// }
+
+	// // Auto Sleep
+	// for task in ent.tasks {
+	// 	#partial switch t in task {
+	// 		case Sleep:
+	// 			return
+	// 	}
+	// } 
+
+	// if ent.sleep <= ent.sleep_max / 4 {
+	// 	add_task(ent, Sleep{})
+	// }
+
+	// // Auto Social
+	// for task in ent.tasks {
+	// 	#partial switch t in task {
+	// 		case Social_Positive:
+	// 			return
+	// 	}
+	// } 
+
+	// if ent.social < ent.social_max / 2 {
+	// 	if len(entities) > 1 {
+	// 		for ind, social_ent in entities {
+	// 			if social_ent.id == ent.id {
+	// 				continue
+	// 			}
+
+	// 			add_task(ent, Social_Positive{social_ent.id, false, false, 10})
+	// 			return
+	// 		}
+	// 	}
+	// }
 }
 
 set_entity_target_pos :: proc(ent: ^Entity, tar: vec3i, adyacent: bool) {
@@ -297,15 +298,16 @@ set_entity_target_pos :: proc(ent: ^Entity, tar: vec3i, adyacent: bool) {
 	}
 }
 
-walk_entity :: proc(ent: ^Entity) -> bool { // Return true when full path is walked
-	if ent.pos == ent.target_pos {
-		fmt.println("Target Reached")
-		return true 
-	}
-	
+WALK_STATUS :: enum {
+	NO_PATH,
+	TARGET,
+	WALKING
+}
+
+walk_entity :: proc(ent: ^Entity) -> WALK_STATUS { // Return true when full path is walked
 	if len(ent.path) == 0 {
 		fmt.println("Not moving, no path assigned")
-		return true 
+		return .NO_PATH 
 	} 
 
 	control_entity_exit_pos(ent)
@@ -315,264 +317,270 @@ walk_entity :: proc(ent: ^Entity) -> bool { // Return true when full path is wal
 	control_entity_enter_pos(ent)
 
 	ordered_remove(&ent.path, 0)
-	return false 
+
+	if ent.pos == ent.target_pos {
+		fmt.println("Target Reached")
+		return .TARGET 
+	}
+	
+	return .WALKING 
 }
 
 //--------------------- Task System -------------------------
-Task :: union {
-	Move_To,
-	Eat_Plant,
-	Drink_World,
-	Sleep,
-	Social_Positive,
-	PickItem
-}
+// Task :: union {
+// 	Move_To,
+// 	Eat_Plant,
+// 	Drink_World,
+// 	Sleep,
+// 	Social_Positive,
+// 	PickItem
+// }
 
-Move_To :: struct {
-	target_pos: vec3i,
-	init: bool,
-	is_auto: bool 
-}
+// Move_To :: struct {
+// 	target_pos: vec3i,
+// 	init: bool,
+// 	is_auto: bool 
+// }
 
-Eat_Plant :: struct {
-	init: bool,
-	target_pos: vec3i,
-}
+// Eat_Plant :: struct {
+// 	init: bool,
+// 	target_pos: vec3i,
+// }
 
-Drink_World :: struct {
-	init: bool,
-	target_pos: vec3i
-}
+// Drink_World :: struct {
+// 	init: bool,
+// 	target_pos: vec3i
+// }
 
-Sleep :: struct {}
-// sleep cannot (shouldnt) be canceled, the entity should be awakened for world activity (loud sounds, other entity, etc)
+// Sleep :: struct {}
+// // sleep cannot (shouldnt) be canceled, the entity should be awakened for world activity (loud sounds, other entity, etc)
 
-Social_Positive :: struct {
-	entity_id: int,
-	init: bool,
-	is_auto: bool,
-	ticks_to_end: int,
-}
+// Social_Positive :: struct {
+// 	entity_id: int,
+// 	init: bool,
+// 	is_auto: bool,
+// 	ticks_to_end: int,
+// }
 
-PickItem :: struct {
-	init: bool,
-	target_pos: vec3i, 
-	item: Item
-}
+// PickItem :: struct {
+// 	init: bool,
+// 	target_pos: vec3i, 
+// 	item: Item
+// }
 
-add_task :: proc(ent: ^Entity, task: Task) {
-	// Remove auto moves
-	for task in ent.tasks {
-		#partial switch t in task {
-			case Move_To:
-				if t.is_auto {
-					ordered_remove(&ent.tasks, 0)
-					fmt.println("Auto Task Erased")
-				}
-		}
-	}
+// add_task :: proc(ent: ^Entity, task: Task) {
+// 	// Remove auto moves
+// 	for task in ent.tasks {
+// 		#partial switch t in task {
+// 			case Move_To:
+// 				if t.is_auto {
+// 					ordered_remove(&ent.tasks, 0)
+// 					fmt.println("Auto Task Erased")
+// 				}
+// 		}
+// 	}
 
-	#partial switch t in task {
-		case Social_Positive:
-			if !t.is_auto {
-				add_task(get_entity_from_id(t.entity_id), Social_Positive{ent.id, true, true, 10})
-			}
-	}
+// 	#partial switch t in task {
+// 		case Social_Positive:
+// 			if !t.is_auto {
+// 				add_task(get_entity_from_id(t.entity_id), Social_Positive{ent.id, true, true, 10})
+// 			}
+// 	}
 
-	append(&ent.tasks, task)
-}
-
-
-init_task :: proc(ent: ^Entity, task: Task) {
-	#partial switch &t in task {
-		case Move_To:
-			set_entity_target_pos(ent, t.target_pos, false)
-			t.init = true
-
-		case Eat_Plant: 
-			set_entity_target_pos(ent, t.target_pos, false)
-			t.init = true
-
-		case Drink_World: 
-			// Check for tile adyacent to water source
-			adyacent_pos: vec3i
-
-			if world[t.target_pos + N].walkable {
-				adyacent_pos = t.target_pos + N
-			} else if world[t.target_pos + S].walkable {
-				adyacent_pos = t.target_pos + S 
-			} else if world[t.target_pos + E].walkable{
-				adyacent_pos = t.target_pos + E
-			} else if world[t.target_pos + W].walkable{
-				adyacent_pos = t.target_pos + W
-			}
-
-			set_entity_target_pos(ent, adyacent_pos, false)
-			t.init = true
-
-		case PickItem: 
-			set_entity_target_pos(ent, t.target_pos, false)
-			t.init = true
-
-	}
-}
-
-execute_task :: proc(ent: ^Entity, task: Task) {
-	switch &t in task {
-		case Move_To:
-			if t.init == false {
-				init_task(ent, task)
-			}
-
-			if walk_entity(ent) {
-				ordered_remove(&ent.tasks, 0)
-			}
-
-		case Eat_Plant: 
-			if t.init == false {
-				init_task(ent, task)
-			}
-
-			if walk_entity(ent) {
-				// Eat Plant
-				if t.target_pos not_in plants {
-					ordered_remove(&ent.tasks, 0)
-					return
-				}
-
-				plant: ^PlantInstance = &plants[t.target_pos]
-
-				plant.calories -= 200
-				ent.food += 200
-
-				if plant.calories <= 0 {
-					delete_plant_world(t.target_pos)
-					ordered_remove(&ent.tasks, 0)
-
-				} else if ent.food >= ent.food_max {
-					ordered_remove(&ent.tasks, 0)
-				}
-			}
-
-		case Drink_World:
-			if t.init == false {
-				init_task(ent, task)
-			}
-
-			if walk_entity(ent) {
-				ent.water += 100
-
-				if ent.water >= ent.water_max {
-					ordered_remove(&ent.tasks, 0)
-				}
-			}
-
-		case Sleep:
-			ent.sleep += 10
-
-			if ent.sleep >= ent.sleep_max {
-				ent.sleep = ent.sleep_max
-				ordered_remove(&ent.tasks, 0)
-			}
-
-		case Social_Positive:
-			if !t.is_auto {
-				#partial switch &t_social in get_entity_from_id(t.entity_id).tasks[0] {
-					case Social_Positive:
-						if t_social.entity_id != ent.id {
-							return
-						}
-
-						if !t.init {
-							init_task(ent, task)
-							set_entity_target_pos(
-								ent,
-								get_entity_from_id(t.entity_id).pos,
-								true
-							)
-							t.init = true
-						}
-
-						if walk_entity(ent) {
-							if t.ticks_to_end > 0 {
-								ent.social += 120 
-
-								if ent.social > ent.social_max {
-									ent.social = ent.social_max
-								}
-
-								get_entity_from_id(t.entity_id).social += 120 
-
-								if get_entity_from_id(t.entity_id).social > get_entity_from_id(t.entity_id).social_max {
-									get_entity_from_id(t.entity_id).social = get_entity_from_id(t.entity_id).social_max
-								}
-
-								if ent.species == get_entity_from_id(t.entity_id).species {
-									ent.mating += 4
-									get_entity_from_id(t.entity_id).mating += 4
-								}
-
-								t.ticks_to_end -= 2 
-							}
-
-							if t.ticks_to_end <= 0 {
-								delete_task(ent, task)
-
-								pregnant_id: int = -1
-								pregnant: ^Entity = {}
-								if ent.gender && !get_entity_from_id(t.entity_id).gender {
-									pregnant_id = t.entity_id 
-								}
-
-								if !ent.gender && get_entity_from_id(t.entity_id).gender {
-									pregnant_id = ent.id
-								}
-
-								if pregnant_id != -1 {
-									pregnant = get_entity_from_id(pregnant_id)
-
-									if pregnant.mating >= pregnant.mating_max {
-										fmt.println("child ==========================================")
-										spawn_entity(rand_(), false, rl.ORANGE, "valid Child", pregnant.species)
-									}
-								}
-							}
+// 	append(&ent.tasks, task)
+// }
 
 
-							/*
-							Interacciones sociales deben generar una reaccion, por ejemplo: una interacion positiva puede dar puntos de mating, una interaccion negativa puede hacer la entidad huir.
-							esto es por que a veces alguna entidad, digase rata, puede interactuar con otra de otro tipo, digase perro. Diferentes factores resultaran en diferentes outputs negativos y positivos.
-							*/
-						}
+// init_task :: proc(ent: ^Entity, task: Task) {
+// 	#partial switch &t in task {
+// 		case Move_To:
+// 			set_entity_target_pos(ent, t.target_pos, false)
+// 			t.init = true
 
-					case:
-						fmt.println("waiting to entity")
-				}
-			}
+// 		case Eat_Plant: 
+// 			set_entity_target_pos(ent, t.target_pos, false)
+// 			t.init = true
 
-		case PickItem: 
-			if t.init == false {
-				init_task(ent, task)
-			}
+// 		case Drink_World: 
+// 			// Check for tile adyacent to water source
+// 			adyacent_pos: vec3i
 
-			if walk_entity(ent) {
-				put_item_on_entity_inventory(t.item, ent)
-				remove_item_in_terrain_cell(t.item, t.target_pos)
-				ordered_remove(&ent.tasks, 0)
-			}
-	}
-}
+// 			if world[t.target_pos + N].walkable {
+// 				adyacent_pos = t.target_pos + N
+// 			} else if world[t.target_pos + S].walkable {
+// 				adyacent_pos = t.target_pos + S 
+// 			} else if world[t.target_pos + E].walkable{
+// 				adyacent_pos = t.target_pos + E
+// 			} else if world[t.target_pos + W].walkable{
+// 				adyacent_pos = t.target_pos + W
+// 			}
 
-delete_task :: proc(ent: ^Entity, task: Task) {
-	#partial switch t in task {
-		case Social_Positive:
-			ordered_remove(&ent.tasks, 0)
-			ordered_remove(&get_entity_from_id(t.entity_id).tasks, 0)
+// 			set_entity_target_pos(ent, adyacent_pos, false)
+// 			t.init = true
 
-		case:
-			return
-	}
-}
+// 		case PickItem: 
+// 			set_entity_target_pos(ent, t.target_pos, false)
+// 			t.init = true
+
+// 	}
+// }
+
+// execute_task :: proc(ent: ^Entity, task: Task) {
+// 	switch &t in task {
+// 		case Move_To:
+// 			if t.init == false {
+// 				init_task(ent, task)
+// 			}
+
+// 			if walk_entity(ent) {
+// 				ordered_remove(&ent.tasks, 0)
+// 			}
+
+// 		case Eat_Plant: 
+// 			if t.init == false {
+// 				init_task(ent, task)
+// 			}
+
+// 			if walk_entity(ent) {
+// 				// Eat Plant
+// 				if t.target_pos not_in plants {
+// 					ordered_remove(&ent.tasks, 0)
+// 					return
+// 				}
+
+// 				plant: ^PlantInstance = &plants[t.target_pos]
+
+// 				plant.calories -= 200
+// 				ent.food += 200
+
+// 				if plant.calories <= 0 {
+// 					delete_plant_world(t.target_pos)
+// 					ordered_remove(&ent.tasks, 0)
+
+// 				} else if ent.food >= ent.food_max {
+// 					ordered_remove(&ent.tasks, 0)
+// 				}
+// 			}
+
+// 		case Drink_World:
+// 			if t.init == false {
+// 				init_task(ent, task)
+// 			}
+
+// 			if walk_entity(ent) {
+// 				ent.water += 100
+
+// 				if ent.water >= ent.water_max {
+// 					ordered_remove(&ent.tasks, 0)
+// 				}
+// 			}
+
+// 		case Sleep:
+// 			ent.sleep += 10
+
+// 			if ent.sleep >= ent.sleep_max {
+// 				ent.sleep = ent.sleep_max
+// 				ordered_remove(&ent.tasks, 0)
+// 			}
+
+// 		case Social_Positive:
+// 			if !t.is_auto {
+// 				#partial switch &t_social in get_entity_from_id(t.entity_id).tasks[0] {
+// 					case Social_Positive:
+// 						if t_social.entity_id != ent.id {
+// 							return
+// 						}
+
+// 						if !t.init {
+// 							init_task(ent, task)
+// 							set_entity_target_pos(
+// 								ent,
+// 								get_entity_from_id(t.entity_id).pos,
+// 								true
+// 							)
+// 							t.init = true
+// 						}
+
+// 						if walk_entity(ent) {
+// 							if t.ticks_to_end > 0 {
+// 								ent.social += 120 
+
+// 								if ent.social > ent.social_max {
+// 									ent.social = ent.social_max
+// 								}
+
+// 								get_entity_from_id(t.entity_id).social += 120 
+
+// 								if get_entity_from_id(t.entity_id).social > get_entity_from_id(t.entity_id).social_max {
+// 									get_entity_from_id(t.entity_id).social = get_entity_from_id(t.entity_id).social_max
+// 								}
+
+// 								if ent.species == get_entity_from_id(t.entity_id).species {
+// 									ent.mating += 4
+// 									get_entity_from_id(t.entity_id).mating += 4
+// 								}
+
+// 								t.ticks_to_end -= 2 
+// 							}
+
+// 							if t.ticks_to_end <= 0 {
+// 								delete_task(ent, task)
+
+// 								pregnant_id: int = -1
+// 								pregnant: ^Entity = {}
+// 								if ent.gender && !get_entity_from_id(t.entity_id).gender {
+// 									pregnant_id = t.entity_id 
+// 								}
+
+// 								if !ent.gender && get_entity_from_id(t.entity_id).gender {
+// 									pregnant_id = ent.id
+// 								}
+
+// 								if pregnant_id != -1 {
+// 									pregnant = get_entity_from_id(pregnant_id)
+
+// 									if pregnant.mating >= pregnant.mating_max {
+// 										fmt.println("child ==========================================")
+// 										spawn_entity(rand_(), false, rl.ORANGE, "valid Child", pregnant.species)
+// 									}
+// 								}
+// 							}
+
+
+// 							/*
+// 							Interacciones sociales deben generar una reaccion, por ejemplo: una interacion positiva puede dar puntos de mating, una interaccion negativa puede hacer la entidad huir.
+// 							esto es por que a veces alguna entidad, digase rata, puede interactuar con otra de otro tipo, digase perro. Diferentes factores resultaran en diferentes outputs negativos y positivos.
+// 							*/
+// 						}
+
+// 					case:
+// 						fmt.println("waiting to entity")
+// 				}
+// 			}
+
+// 		case PickItem: 
+// 			if t.init == false {
+// 				init_task(ent, task)
+// 			}
+
+// 			if walk_entity(ent) {
+// 				put_item_on_entity_inventory(t.item, ent)
+// 				remove_item_in_terrain_cell(t.item, t.target_pos)
+// 				ordered_remove(&ent.tasks, 0)
+// 			}
+// 	}
+// }
+
+// delete_task :: proc(ent: ^Entity, task: Task) {
+// 	#partial switch t in task {
+// 		case Social_Positive:
+// 			ordered_remove(&ent.tasks, 0)
+// 			ordered_remove(&get_entity_from_id(t.entity_id).tasks, 0)
+
+// 		case:
+// 			return
+// 	}
+// }
 
 // --------------------------------------------------------------------------
 spawn_entity :: proc(pos: vec3i, gender: bool, color: rl.Color, name: string, species: Species) {
@@ -634,9 +642,9 @@ get_entity_from_id :: proc(id: int) -> ^Entity {
 }
 
 despawn_entity :: proc(ent: ^Entity) {
-	for task in ent.tasks {
-		delete_task(ent, task)
-	}
+	// for task in ent.tasks {
+	// 	delete_task(ent, task)
+	// }
 
 	control_entity_exit_pos(ent)
 	delete_key(&entities, ent.id)

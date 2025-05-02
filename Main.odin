@@ -1,6 +1,9 @@
 package Atalay 
 
 import fmt "core:fmt"
+import strings "core:strings"
+import strconv "core:strconv"
+
 import rl "vendor:raylib"
 import rlgl "vendor:raylib/rlgl"
 
@@ -28,6 +31,8 @@ main :: proc() {
 	rl.InitWindow(1400, 750, "Atalay")
 	rl.DisableCursor()
 	rl.SetExitKey(.BACKSPACE)
+	rl.SetTargetFPS(60)
+
 	set_borderles_window()
 
 	load_textures_and_models()
@@ -37,17 +42,15 @@ main :: proc() {
 	generate_world_terrain()
 	init_world_path()
 
-	rl.SetTargetFPS(60)
-
 	//##
 	test_init_rats()
-	current_entity = 1
-
 	init_some_plants()
+
+	current_entity = 1
 
 	put_item_in_terrain_cell(
 		create_item(&Rock_GameModel, "A Rock"),
-		{1, 1, 0}
+		{0, 3, 0}
 	)
 	put_item_in_terrain_cell(
 		create_item(&Rock_GameModel, "Rock n roll"),
@@ -76,7 +79,10 @@ main :: proc() {
 			}
 		}
 
-			//// Inputs
+	// UPDATES
+		update_pointer()
+
+	/* INPUTS */ {
 		if rl.IsKeyReleased(.F) {
 			if gamemode == .POINTER {
 				set_mode(.FOCUS_ENTITY)
@@ -125,37 +131,50 @@ main :: proc() {
 		if rl.IsKeyReleased(.TAB) {
 			view_inventory = !view_inventory
 		}
+	}
 
 		rl.BeginDrawing()
 			rl.ClearBackground(rl.SKYBLUE)
 
 			rl.BeginMode3D(camera3)
+				mode()
 
-					draw_entities()
-					update_pointer()
+				draw_entities()
+				draw_world_terrain()
+				draw_plants()
 
-					//// Modes Update
-					update_mode()
-
-					draw_world_terrain()
-					// Draw plants
-					draw_plants()
-
-					// Draw Walls
-					for key_pos, &cell in world {
-						for &wall in cell.walls {
-							rl.DrawModelEx(
-								wall.model, 
-								wall.pos * {1, 2, 1},
-								{0, 1, 0},
-								wall.rot,
-								{1, 1, 1},
-								rl.WHITE)
-						}
+				// Draw Walls
+				for key_pos, &cell in world {
+					for &wall in cell.walls {
+						rl.DrawModelEx(
+							wall.model, 
+							wall.pos * {1, 2, 1},
+							{0, 1, 0},
+							wall.rot,
+							{1, 1, 1},
+							rl.WHITE)
 					}
+				}
 			rl.EndMode3D()
 
-			//// GUIS
+	/* GUIS */ { 
+			rl.DrawFPS(0, 0)
+			pointer_pos_str: string = "Pointer Position: "
+			for val, i in pointer_pos {
+				buf: [4]byte
+				str := strconv.itoa(buf[:], val)
+				pointer_pos_str = strings.concatenate({pointer_pos_str, str})
+
+				if i != 2 {
+					pointer_pos_str = strings.concatenate({pointer_pos_str, ", "})
+				}
+			}
+			pointer_pos_cstr: cstring = strings.clone_to_cstring(pointer_pos_str)
+			rl.DrawText(pointer_pos_cstr, 0, 20, 20, rl.DARKGREEN)
+
+			draw_time()
+			speed_gui()
+
 			if gamemode == .GUI {
 				menu_modes()
 			}
@@ -168,10 +187,6 @@ main :: proc() {
 				pause_gui()
 			}
 
-			draw_time()
-
-			rl.DrawFPS(0, 0)
-
 			if current_entity != -1 {
 				entity_gui()
 			}
@@ -179,9 +194,7 @@ main :: proc() {
 			if view_inventory {
 				inventory_gui()
 			}
-
-			speed_gui()
-
+	}
 		rl.EndDrawing()
 	}
 

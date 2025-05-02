@@ -64,7 +64,7 @@ set_mode :: proc(mode: GameMode) {
 	gamemode = mode
 }
 
-update_mode :: proc() {
+mode :: proc() {
 	#partial switch gamemode {
 		case .POINTER:
 			update_pointer_mode()
@@ -82,7 +82,6 @@ update_mode :: proc() {
 
 ////-----------------------------------------------------------------------------------------------------
 update_pointer_mode :: proc() {
-
 	if rl.IsMouseButtonReleased(.LEFT) && current_entity > -1{
 		// select entity
 		if world[pointer_pos].entity_id != -1 {
@@ -97,6 +96,7 @@ update_pointer_mode :: proc() {
 
 	// draw pointer
 	rl.DrawCubeWiresV(to_v3(to_visual_world(pointer_pos)) + {0.5, 0.5, 0.5}, {1, 1, 1}, rl.BLUE)
+	fmt.println(pointer_pos)
 }
 
 update_wall_place_mode :: proc() {
