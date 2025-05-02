@@ -13,7 +13,7 @@ WINDOW_HEIGHT: f32 = 750
 
 camera3: rl.Camera = {
 	{0, 10, 10}, 
-	{0, 0, 0},
+	{0, 3, 0},
 	{0.0, 1.0, 0.0},
 	45.0,
 	.PERSPECTIVE
@@ -32,8 +32,6 @@ main :: proc() {
 	rl.DisableCursor()
 	rl.SetExitKey(.BACKSPACE)
 	rl.SetTargetFPS(60)
-
-	set_borderles_window()
 
 	load_textures_and_models()
 	defer unload_textures_and_models()
@@ -54,7 +52,7 @@ main :: proc() {
 	)
 	put_item_in_terrain_cell(
 		create_item(&Rock_GameModel, "Rock n roll"),
-		{0, 1, 0}
+		{0, 2, 1}
 	)
 
 	put_item_on_entity_inventory(create_item(&Rock_GameModel, "Rock test"), get_entity_from_id(1))
@@ -158,22 +156,29 @@ main :: proc() {
 			rl.EndMode3D()
 
 	/* GUIS */ { 
-			rl.DrawFPS(0, 0)
-			pointer_pos_str: string = "Pointer Position: "
-			for val, i in pointer_pos {
-				buf: [4]byte
-				str := strconv.itoa(buf[:], val)
-				pointer_pos_str = strings.concatenate({pointer_pos_str, str})
+			if gamemode != .PAUSE_GUI {
 
-				if i != 2 {
-					pointer_pos_str = strings.concatenate({pointer_pos_str, ", "})
+				rl.DrawFPS(0, 0)
+				pointer_pos_str: string = "Pointer Position: "
+				for val, i in pointer_pos {
+					buf: [4]byte
+					str := strconv.itoa(buf[:], val)
+					pointer_pos_str = strings.concatenate({pointer_pos_str, str})
+
+					if i != 2 {
+						pointer_pos_str = strings.concatenate({pointer_pos_str, ", "})
+					}
+				}
+				pointer_pos_cstr: cstring = strings.clone_to_cstring(pointer_pos_str)
+				rl.DrawText(pointer_pos_cstr, 0, 20, 20, rl.DARKGREEN)
+
+				draw_time()
+				speed_gui()
+
+				if current_entity != -1 {
+					entity_gui()
 				}
 			}
-			pointer_pos_cstr: cstring = strings.clone_to_cstring(pointer_pos_str)
-			rl.DrawText(pointer_pos_cstr, 0, 20, 20, rl.DARKGREEN)
-
-			draw_time()
-			speed_gui()
 
 			if gamemode == .GUI {
 				menu_modes()
@@ -187,9 +192,6 @@ main :: proc() {
 				pause_gui()
 			}
 
-			if current_entity != -1 {
-				entity_gui()
-			}
 
 			if view_inventory {
 				inventory_gui()

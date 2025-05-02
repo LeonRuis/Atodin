@@ -85,7 +85,6 @@ draw_time :: proc() {
 
 	rl.GuiLabel(time_rect, time_cstr)
 
-
 	// Date
 	day_buf: [4]byte
 	month_buf: [4]byte

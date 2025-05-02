@@ -372,11 +372,11 @@ pause_gui :: proc() {
 
 	rl.GuiLabel(rect, "This is the Pause Menu")
 	if rl.GuiButton(btn_rect, "Borderless Window") {
-		set_borderles_window()
+		toggle_borderles_window()
 	}
 }
 
-set_borderles_window :: proc() {
+toggle_borderles_window :: proc() {
 	rl.ToggleBorderlessWindowed()
 	if in_borderless {
 		WINDOW_WIDTH = 1400

@@ -80,7 +80,7 @@ Species :: enum {
 entities: map[int]Entity
 
 //##
-rand_ :: proc() -> vec3i {
+rand_pos :: proc() -> vec3i {
 	x: int = int(rand.int31_max(i32(CHUNK_SIZE.x)))
 	z: int = int(rand.int31_max(i32(CHUNK_SIZE.z)))
 	y := terrain[{x, z}].floor_height
@@ -89,10 +89,10 @@ rand_ :: proc() -> vec3i {
 }
 
 test_init_rats :: proc() {
-	spawn_entity(rand_(), true, rl.BLUE, "Pinnaple", .RAT)
-	spawn_entity(rand_(), false, rl.ORANGE, "Carrot", .RAT)
-	spawn_entity(rand_(), true, rl.BLUE, "Elten", .HUMAN)
-	spawn_entity(rand_(), false, rl.PINK, "Totl", .HUMAN)
+	spawn_entity(rand_pos(), true, rl.BLUE, "Pinnaple", .RAT)
+	spawn_entity(rand_pos(), false, rl.ORANGE, "Carrot", .RAT)
+	spawn_entity(rand_pos(), true, rl.BLUE, "Elten", .HUMAN)
+	spawn_entity(rand_pos(), false, rl.PINK, "Totl", .HUMAN)
 }
 //##
 
@@ -172,14 +172,25 @@ update_entity :: proc(ent: ^Entity) {
 	if len(ent.tasks) > 0 {
 		execute_task(ent, &ent.tasks[0])
 	} 
-	// else { 
-	// 	ent.idle_tick_count += 1 
-	// }
+	else { 
+		ent.idle_tick_count += 1 
+	}
 
-	// if ent.idle_tick_count == 7 {
-	// 	add_task(ent, Move_To{rand_(), false, true})
-	// 	ent.idle_tick_count = 0
-	// }
+	if ent.idle_tick_count == 7 {
+		add_task(
+			ent,
+			Task{
+				pick_task_id(),
+				false,
+				false,
+
+				Move_To{
+					rand_pos()	
+				}
+			} 
+		)
+		ent.idle_tick_count = 0
+	}
 
 	// // Auto food
 	// if ent.food <= ent.food_max / 3 {
