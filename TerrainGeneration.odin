@@ -56,7 +56,8 @@ generate_world_terrain :: proc() {
 						int(moist_value),
 						water_source,
 
-						{}
+						{},
+						-1
 					}
 
 					terrain[{x, z}] = this_terrain_cell
@@ -77,7 +78,8 @@ terrain_cell :: struct {
 
 	water_source: bool,
 
-	items: [dynamic]Item
+	items: [dynamic]Item,
+	plant: int
 }
 
 draw_world_terrain :: proc() {

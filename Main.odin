@@ -158,7 +158,7 @@ main :: proc() {
 	/* GUIS */ { 
 			if gamemode != .PAUSE_GUI {
 
-				rl.DrawFPS(0, 0)
+				rl.DrawFPS(i32(WINDOW_WIDTH) - 75, 0)
 				pointer_pos_str: string = "Pointer Position: "
 				for val, i in pointer_pos {
 					buf: [4]byte

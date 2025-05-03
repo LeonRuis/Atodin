@@ -387,55 +387,9 @@ toggle_borderles_window :: proc() {
 	}
 		in_borderless = !in_borderless
 }
-
-//---------------- Other guis -------------------------------------
-tick: int = 0
-speed: i32 = 1
-
-speed_gui :: proc() {
-	rect: rl.Rectangle = {
-		WINDOW_WIDTH - 100 * 4,
-		WINDOW_HEIGHT - 20, 
-		100,
-		20
-	}
-
-	// Speed by GUI
-	rl.GuiToggleGroup(rect, "Pause;Normal;Fast;Forward", &speed)
-
-	// Speed by Input
-	if rl.IsKeyReleased(.G) {
-		if speed == 0 {
-			speed = 1	
-		} else {
-			speed = 0
-		}
-	} else if rl.IsKeyReleased(.ONE) {
-		speed = 1
-	} else if rl.IsKeyReleased(.TWO) {
-		speed = 2
-	} else if rl.IsKeyReleased(.THREE) {
-		speed = 3
-	}
-
-	// Speed Control
-	switch speed {
-		case 0: 
-			return
-
-		case 1:
-			tick += 1
-
-		case 2:
-			tick += 2
-
-		case 3:
-			tick += 15
-
-		case:	
-			fmt.println("No Speed Defined")
-			tick += 0 
-	}
+// Thing Info Data ------------------------------------------------------------
+info_gui :: proc() {
+	
 }
 
 //---------------- Tools -------------------------------------

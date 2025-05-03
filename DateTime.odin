@@ -3,6 +3,7 @@ package Atalay
 import rl "vendor:raylib"
 import strconv "core:strconv"
 import strings "core:strings"
+import fmt "core:fmt"
 
 sec: int = 0
 min: int = 0 
@@ -13,6 +14,55 @@ month: int = 1
 year: int = 0
 
 secs_per_tic: int = 30 // 2 seems like a good number
+
+tick: int = 0
+speed: i32 = 1
+
+speed_gui :: proc() {
+	rect: rl.Rectangle = {
+		0,
+		0, 
+		100,
+		20
+	}
+
+	// Speed by GUI
+	rl.GuiToggleGroup(rect, "Pause;Normal;Fast;Forward", &speed)
+
+	// Speed by Input
+	if rl.IsKeyReleased(.G) {
+		if speed == 0 {
+			speed = 1	
+		} else {
+			speed = 0
+		}
+	} else if rl.IsKeyReleased(.ONE) {
+		speed = 1
+	} else if rl.IsKeyReleased(.TWO) {
+		speed = 2
+	} else if rl.IsKeyReleased(.THREE) {
+		speed = 3
+	}
+
+	// Speed Control
+	switch speed {
+		case 0: 
+			return
+
+		case 1:
+			tick += 1
+
+		case 2:
+			tick += 2
+
+		case 3:
+			tick += 15
+
+		case:	
+			fmt.println("No Speed Defined")
+			tick += 0 
+	}
+}
 
 update_time :: proc() {
 	sec += secs_per_tic 
@@ -47,14 +97,14 @@ update_time :: proc() {
 
 draw_time :: proc() {
 	time_rect: rl.Rectangle = {
-		200,
+		WINDOW_WIDTH / 3.3,
 		0, 
 		100,
 		20
 	}
 
 	date_rect: rl.Rectangle = {
-		500,
+		WINDOW_WIDTH / 2.8,
 		0, 
 		100,
 		20

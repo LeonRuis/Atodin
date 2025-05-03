@@ -19,10 +19,6 @@ current_entity: int
 pointer_pos: vec3i
 wall_rotation: int = 0
 
-//##
-current_plant: ^PlantInstance
-//##
-
 set_mode :: proc(mode: GameMode) {
 	#partial switch mode {
 		case .POINTER:
@@ -41,10 +37,6 @@ set_mode :: proc(mode: GameMode) {
 			rl.EnableCursor()
 			right_click_mode_pos = rl.GetWorldToScreen(to_v3(to_visual_world(pointer_pos)), camera3)
 			rl.SetMousePosition(i32(right_click_mode_pos.x), i32(right_click_mode_pos.y))
-
-			if pointer_pos in plants {
-				current_plant = &plants[pointer_pos]
-			}
 
 			in_gui = true
 
@@ -82,10 +74,13 @@ mode :: proc() {
 
 ////-----------------------------------------------------------------------------------------------------
 update_pointer_mode :: proc() {
-	if rl.IsMouseButtonReleased(.LEFT) && current_entity > -1{
+	// left click options
+	if rl.IsMouseButtonReleased(.LEFT) {
 		// select entity
 		if len(world[pointer_pos].entities) > 0 {
 			current_entity = world[pointer_pos].entities[0]
+		} else {
+			current_entity = -1
 		}
 	}
 

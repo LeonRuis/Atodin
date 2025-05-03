@@ -4,7 +4,16 @@ import rl "vendor:raylib"
 import fmt "core:fmt"
 import rand "core:math/rand"
 
+plants: map[int]PlantInstance
+valid_plant_id: int = -1
+get_valid_plant_id :: proc() -> int {
+	valid_plant_id += 1
+	return valid_plant_id
+}
+
 PlantData :: struct {
+	id: int, 
+
 	conditions: [dynamic]proc(pos: vec3i) -> bool,
 
 	low_temp: int,
@@ -90,7 +99,6 @@ VeggieStage :: struct {
 LongStage :: struct {}
 
 
-plants: map[vec3i]PlantInstance
 edible_plants: [dynamic]vec3i
 
 // Directions for seeding 
@@ -144,7 +152,6 @@ control_plant_stages :: proc(plant: ^PlantInstance, pos: vec3i) {
 			}
 
 			stage_type.veggie_grow += 1
-			fmt.println(stage_type.veggie_grow)
 
 			if stage_type.veggie_grow >= stage_type.to_grow_veggie {
 				stage_type.veggie_grow = 0
@@ -153,7 +160,7 @@ control_plant_stages :: proc(plant: ^PlantInstance, pos: vec3i) {
 					this_pos := pos + dir
 					this_pos_2d: vec2i = {this_pos.x, this_pos.z}
 
-					if this_pos_2d in terrain && this_pos not_in plants && get_validation_plant_in_pos(plant.data, this_pos) {
+					if this_pos_2d in terrain && terrain[this_pos_2d].plant == -1 && get_validation_plant_in_pos(plant.data, this_pos) {
 						patch_behavior(this_pos, plant.data, 5, 25, 7)
 						return
 					}
@@ -311,19 +318,19 @@ init_some_plants :: proc() {
 	count = 0
 
 	// plant some Long Grass
-	for key_pos, cell in terrain {
-		pos: vec3i = {key_pos.x, cell.floor_height, key_pos.y}
+	// for key_pos, cell in terrain {
+	// 	pos: vec3i = {key_pos.x, cell.floor_height, key_pos.y}
 
-		if cell.tile != grass_model {
-			continue
-		}
+	// 	if cell.tile != grass_model {
+	// 		continue
+	// 	}
 
-		if get_validation_plant_in_pos(&foliage_data, pos) && count < positions {
+	// 	if get_validation_plant_in_pos(&foliage_data, pos) && count < positions {
 
-			patch_behavior(pos, &foliage_data, 100, 1, 50)
-			count += 1
-		}
-	}	
+	// 		patch_behavior(pos, &foliage_data, 100, 1, 50)
+	// 		count += 1
+	// 	}
+	// }	
 
 }
 

@@ -1,1 +1,2 @@
-Change Log
+//-- Pendientes -- //
+* Cursor debe ser siempre libre: la camara no debe ser controlada por el movimiento del mouse, tengo la idea de que puede ser movida por WASD y el boton central del raton
