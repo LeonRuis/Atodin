@@ -103,7 +103,11 @@ entities_update :: proc() {
 update_entity :: proc(ent: ^Entity) {
 	id := ent.id
 	if ent.social > 0 {
-		ent.social -= 3
+		ent.social -= 1 
+	}
+
+	if ent.water > 0 {
+		ent.water -= 1
 	}
 
 	if len(ent.tasks) > 0 {
@@ -180,7 +184,7 @@ update_entity :: proc(ent: ^Entity) {
 	}
 
 	// Idle
-	if len(ent.tasks) < 1 {
+	if len(ent.tasks) < 1 && id != current_entity {
 		ent.idle_count += 1
 
 		if ent.idle_count >= 10 {

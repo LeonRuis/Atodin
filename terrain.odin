@@ -14,6 +14,7 @@ scale: f64 = 0.01
 Terrain_Cell :: struct {
 	color: rl.Color,
 	entity: u32,
+	plant: u32,
 
 	items: [dynamic]Item
 }
@@ -36,9 +37,10 @@ terrain_init :: proc() {
 				}
 
 				terrain_cell: Terrain_Cell = {
-					color,
-					null_id,
-					{}
+					color = color,
+					entity = null_id,
+					plant = null_id,
+					items = {}
 				}
 
 				terrain_world[pos] = terrain_cell
@@ -54,6 +56,11 @@ terrain_draw :: proc() {
 
 		if len(cell.items) > 0 {
 			draw_item(key_pos, cell.items[0].item_data.sprite_dir)
+		}
+
+		if cell.plant != null_id {
+			plant := &plants[cell.plant]
+			draw_plant(plant.plant_data.sprite_dir, key_pos)	
 		}
 	}	
 }

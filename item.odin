@@ -5,7 +5,7 @@ import rl "vendor:raylib"
 Item_Data :: struct {
 	title: cstring,
 	sprite_dir: vec2i,
-	description: cstring
+	description: cstring,
 }
 
 Item :: struct {
@@ -13,8 +13,6 @@ Item :: struct {
 	item_data: ^Item_Data,
 
 	name: cstring,
-	
-	// stack_count: u32
 }
 
 valid_item_id: u32 = 0
@@ -25,7 +23,7 @@ get_item_id :: proc() -> u32 {
 
 draw_item :: proc(pos: vec3i, sprite_dir: vec2i) {
 	source: rl.Rectangle = {
-		f32(sprite_dir.x), f32(sprite_dir.y),
+		f32(sprite_dir.x) * item_pixel_size, f32(sprite_dir.y) * item_pixel_size,
 		item_pixel_size, item_pixel_size
 	}
 
@@ -72,6 +70,18 @@ place_item_in_inventory :: proc(item: Item, inventory: ^[dynamic]Slot) {
 	}
 }
 
+remove_item_from_inventory :: proc(item: Item, inventory: ^[dynamic]Slot) {
+	for &slot in inventory {
+		switch item_type in slot.item_type {
+			case Null_Item:
+			case Item:
+				if item_type.id == item.id {
+					slot.item_type = Null_Item {}
+				}
+			}	
+	}
+}
+
 remove_item_from_terrain :: proc(item_id: u32, pos: vec3i) {
 	terrain_cell := &terrain_world[pos]
 
@@ -100,4 +110,10 @@ rock_item_data: Item_Data = {
 	title = "Rock",
 	sprite_dir = rock,
 	description = "Blueish Stone."
+}
+
+stick_item_data: Item_Data = {
+	title = "Stick",
+	sprite_dir = stick,
+	description = "The wooden primary."
 }

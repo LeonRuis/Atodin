@@ -3,14 +3,15 @@ package Atalay
 import fmt "core:fmt"
 import noise "core:math/noise"
 import rand "core:math/rand"
+import strings "core:strings"
 import rl "vendor:raylib"
 
 window_width: i32 = 1200
 window_height: i32 = 799
 
-tile_pixel_size :: 32
-item_pixel_size :: 16
-
+tile_pixel_size  :: 32
+item_pixel_size  :: 16
+plant_pixel_size :: 16
 // 
 font_size :: 20
 //
@@ -22,10 +23,16 @@ male := vec2i{0, 0} * tile_pixel_size
 female := vec2i{1, 0} * tile_pixel_size
 
 	// Items
-item_atlas  : rl.Texture2D
+item_atlas: rl.Texture2D
 
-rock := vec2i{0, 0} * item_pixel_size
-stick := vec2i{1, 0} * item_pixel_size
+rock  :: vec2i{0, 0}
+stick :: vec2i{1, 0}
+
+	// Plants
+plant_atlas: rl.Texture2D
+
+carrot :: vec2i{0, 0}
+rose_bush :: vec2i{1, 0}
 
 main :: proc() {
 	// Init Engine
@@ -45,6 +52,9 @@ main :: proc() {
 
 	item_atlas = rl.LoadTexture("Items_Atlas.png")
 	defer rl.UnloadTexture(item_atlas)
+
+	plant_atlas = rl.LoadTexture("Plants_Atlas.png")
+	defer rl.UnloadTexture(plant_atlas)
 
 	terrain_init()
 	path_init()
@@ -71,13 +81,33 @@ main :: proc() {
 		"Rocka"
 	}
 
+	some_stick: Item = {
+		get_item_id(),
+		&stick_item_data,
+
+		stick_item_data.title
+	}
+
+	create_plant(&carrot_plant_data, {15, 0, 0})
+
 	place_item_in_world(a_rock, {3, 0, 3})
 	place_item_in_world(some_rock, {3, 0, 3})
 	place_item_in_world(rocka, {3, 0, 3})
+	place_item_in_world(some_stick, {6, 0, 10})
 
 	create_entity({0, 0, 0}, "Tert", male)
 	create_entity({3, 0, 2}, "Afliton", male)
 	create_entity({7, 0, 3}, "Ina", female)
+
+	place_item_in_inventory(
+		Item {
+			get_item_id(),
+			&rock_item_data,
+
+			rock_item_data.title
+		},
+		&get_entity(1).inventory
+	)
 
 	tick: u32 = 0	
 	pause: bool = false
@@ -85,6 +115,9 @@ main :: proc() {
 
 	for !rl.WindowShouldClose() {
 		//##
+		if rl.IsMouseButtonPressed(.LEFT) {
+			fmt.println(mouse_grid_pos)
+		}
 		if rl.IsKeyPressed(.SPACE) {
 			pause = !pause
 		}
@@ -116,19 +149,12 @@ main :: proc() {
 		rl.BeginDrawing()
 			rl.ClearBackground(rl.GRAY)
 
-			//--
-			if len(terrain_world[mouse_grid_pos].items) > 0 {
-				for item in terrain_world[mouse_grid_pos].items {
-					fmt.println(item.item_data.title)
-				}
-			}
-			//--
-
 			rl.BeginMode2D(camera)
 				terrain_draw()	
 				entities_draw()
 
 				//##
+				// draw_plant(carrot, mouse_grid_pos)
 				//##
 
 				// Draw Mouse Position
@@ -138,14 +164,38 @@ main :: proc() {
 
 			rl.EndMode2D()
 
+			//--
+			if len(terrain_world[mouse_grid_pos].items) > 0 {
+				str: string = ""
+
+				label_rect: rl.Rectangle = {
+					(f32(window_width) / 2) - 200, 0,
+					500, 50
+				}
+
+				s: string
+				for item, i in terrain_world[mouse_grid_pos].items {
+					s = strings.clone_from_cstring(item.name)
+					if i == 0 {
+						str = strings.concatenate({str, s})
+						continue
+					}
+
+					str = strings.concatenate({str, " - ", s})
+				}
+
+				cstr := strings.clone_to_cstring(str)
+
+				rl.GuiLabel(label_rect, cstr)
+			}
+			//--
+
 			rl.DrawFPS(0, 0)
 			entity_gui()
 		rl.EndDrawing()
 
 	}
 }
-
-
 
 // Camera
 camera: rl.Camera2D = {
@@ -191,6 +241,10 @@ in_gui: bool = false
 in_right_click: bool = false
 rc_world_pos: vec3i
 rc_target_ent: u32
+
+in_item_options: bool = false
+item_in_options: Item
+item_options_rect: rl.Rectangle
 
 entity_gui :: proc() {
 	in_gui = false
@@ -258,16 +312,40 @@ entity_gui :: proc() {
 		item_rect.y += 30
 		rl.GuiLabel(slot_rect, slot.name)
 
-		switch item in slot.item_type {
+		switch &item in slot.item_type {
 			case Item:
 				if rl.GuiButton(item_rect, item.name) {
-
+					if in_item_options {
+						in_item_options = false 
+					} else {
+						in_item_options = true
+						item_in_options = item
+						item_options_rect = item_rect
+						item_options_rect.x += 200
+					}
 				}
 
 			case Null_Item:
 				rl.GuiLabel(item_rect, "No Item")
 		}
 	} 
+
+		// Item Options
+	if in_item_options {
+		rl.GuiPanel(item_options_rect, "Options")
+
+		// Drop Item
+		option_rect: rl.Rectangle = item_options_rect
+		option_rect.y += 25
+
+		if rl.GuiButton(option_rect, "Drop") {
+			// fmt.println("Drop: ", item_in_options.name)
+			remove_item_from_inventory(item_in_options, &ent.inventory)
+			place_item_in_world(item_in_options, ent.pos)
+
+			in_item_options = false
+		}
+	}
 
 	// Right Click Menu
 	if rl.IsMouseButtonPressed(.RIGHT) {
