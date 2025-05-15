@@ -1,4 +1,0 @@
-//----------- Dividir Region
-//// Indicacion de que el bloque de codigo deberia estar organizado en otro lugar 
-//# Testeo, el codigo en estos bloques no suelen estar pulidos y necesitan revision
-// Tag o Titulo
