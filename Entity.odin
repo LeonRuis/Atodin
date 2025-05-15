@@ -145,7 +145,6 @@ update_entity :: proc(ent: ^Entity) {
 
 			some_ent = curr_id
 		}
-		fmt.println(some_ent)
 
 		add_task(
 		id,

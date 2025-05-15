@@ -9,15 +9,23 @@ window_width: i32 = 1200
 window_height: i32 = 799
 
 tile_pixel_size :: 32
+item_pixel_size :: 16
 
 // 
 font_size :: 20
 //
 
+	// Entities
 entity_atlas: rl.Texture2D
 
 male := vec2i{0, 0} * tile_pixel_size
 female := vec2i{1, 0} * tile_pixel_size
+
+	// Items
+item_atlas  : rl.Texture2D
+
+rock := vec2i{0, 0} * item_pixel_size
+stick := vec2i{1, 0} * item_pixel_size
 
 main :: proc() {
 	// Init Engine
@@ -35,10 +43,29 @@ main :: proc() {
 	entity_atlas = rl.LoadTexture("Entity_Atlas.png")
 	defer rl.UnloadTexture(entity_atlas)
 
+	item_atlas = rl.LoadTexture("Items_Atlas.png")
+	defer rl.UnloadTexture(item_atlas)
+
 	terrain_init()
 	path_init()
 
 	//##
+	a_rock: Item = {
+		get_item_id(),
+		&rock_item_data,
+
+		"A Rock"
+	}
+
+	some_rock: Item = {
+		get_item_id(),
+		&rock_item_data,
+
+		"Some Rock"
+	}
+
+	place_item_in_world(a_rock, {3, 0, 3})
+	place_item_in_world(some_rock, {3, 0, 3})
 
 	create_entity({0, 0, 0}, "Tert", male)
 	create_entity({3, 0, 2}, "Afliton", male)
@@ -50,11 +77,6 @@ main :: proc() {
 
 	for !rl.WindowShouldClose() {
 		//##
-		if rl.IsMouseButtonPressed(.LEFT) {
-			ok := (mouse_grid_pos in path_world)
-			fmt.println(ok)
-		}
-
 		if rl.IsKeyPressed(.SPACE) {
 			pause = !pause
 		}
@@ -87,19 +109,16 @@ main :: proc() {
 			rl.ClearBackground(rl.GRAY)
 
 			rl.BeginMode2D(camera)
-				terrain_draw()			
+				terrain_draw()	
 				entities_draw()
+
+				//##
+				//##
 
 				// Draw Mouse Position
 				if mouse_grid_pos in terrain_world {
 					rl.DrawRectangleLines(mouse_grid_pos.x * tile_pixel_size, mouse_grid_pos.z * tile_pixel_size, tile_pixel_size, tile_pixel_size, rl.WHITE)
 				}
-
-				//##
-				// for key_pos, path_cell in path_world {
-				// 	rl.DrawRectangleLines(key_pos.x * tile_pixel_size, key_pos.z * tile_pixel_size, tile_pixel_size, tile_pixel_size, rl.YELLOW)
-				// }	
-				//##
 
 			rl.EndMode2D()
 
@@ -110,52 +129,7 @@ main :: proc() {
 	}
 }
 
-// Terrain
-terrain_world: map[vec3i]Terrain_Cell
 
-map_size: vec3i = {50, 1, 50}
-seed: i64 = 799
-scale: f64 = 0.01
-
-Terrain_Cell :: struct {
-	color: rl.Color,
-	entity: u32
-}
-
-terrain_init :: proc() {
-	// seed = i64(rand.int31())
-	for x in 0..<map_size.x {
-		for y in 0..<map_size.y {
-			for z in 0..<map_size.z {
-				pos: vec3i = {x, y, z}
-
-				color := rl.DARKGREEN
-
-				moist_value := noise.noise_2d(seed, {f64(x) * scale, f64(z) * scale})
-				moist_v := i32(moist_value * 10)
-
-				if moist_v >= 8 {
-					color = rl.SKYBLUE
-
-				}
-
-				terrain_cell: Terrain_Cell = {
-					color,
-					null_id
-				}
-
-				terrain_world[pos] = terrain_cell
-			}
-		}
-	}
-}
-
-terrain_draw :: proc() {
-	for key_pos, cell in terrain_world {
-		pos := key_pos * tile_pixel_size
-		rl.DrawRectangle(pos.x, pos.z, tile_pixel_size, tile_pixel_size, cell.color)
-	}	
-}
 
 // Camera
 camera: rl.Camera2D = {
@@ -352,6 +326,17 @@ right_click_gui :: proc() {
 				}
 			)
 			in_right_click = false
+		}
+	}
+
+	// Pick Item From Terrain 
+	if len(terrain_world[rc_world_pos].items) > 0 {
+		for item in terrain_world[rc_world_pos].items {
+			button_rect.y += 25
+
+			if rl.GuiButton(button_rect, item.name) {
+				fmt.println("item Taken")
+			}
 		}
 	}
 }
