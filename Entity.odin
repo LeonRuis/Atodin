@@ -23,7 +23,9 @@ Entity :: struct {
 	max_social: f32,
 
 	water: f32,
-	max_water: f32
+	max_water: f32,
+
+	inventory: [dynamic]Slot
 }
 
 valid_entity_id: u32 = 0
@@ -61,7 +63,18 @@ create_entity :: proc(pos: vec3i, name: cstring, sprite: vec2i) {
 		max_social = 400,
 
 		water = f32(rand.int31_max(400)),
-		max_water = 400
+		max_water = 400, 
+
+		inventory = {
+			Slot {
+				"Left Hand",
+				Null_Item { }
+			},
+			Slot {
+				"Right Hand",
+				Null_Item { }
+			}
+		}
 	}
 
 	entities[ID] = entity

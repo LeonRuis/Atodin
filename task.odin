@@ -14,7 +14,8 @@ Task :: struct {
 	type: union {
 		Move,
 		Social,
-		Drink
+		Drink,
+		Pick_Item
 	}
 }
 
@@ -28,7 +29,7 @@ add_task :: proc(id: u32, task: Task) {
 	ent := get_entity(id)
 
 	#partial switch type in task.type {
-		case Move, Drink:
+		case Move, Drink, Pick_Item:
 		case Social:
 			if task.is_auto {
 				break
@@ -69,7 +70,7 @@ init_task :: proc(id: u32, task: ^Task) {
 			task.task_pos = get_entity(type.target_ent).pos
 			task.path = get_path(ent.pos, task.task_pos, true)
 
-		case Drink: 
+		case Drink, Pick_Item: 
 			task.path = get_path(ent.pos, task.task_pos, true)
 	}
 }
@@ -128,6 +129,22 @@ execute_task :: proc(id: u32, task: ^Task) {
 			if ent.water >= ent.max_water {
 				end_task(id, task)
 			}
+
+		case Pick_Item:
+			if !task.is_init {
+				init_task(id, task)
+			}
+
+			status := walk_entity_path(id, task)
+
+			if status != .WALK {
+				if check_empty_slot(&ent.inventory) {
+					// Add Item to Inventory and delete from world
+					place_item_in_inventory(type.item, &ent.inventory)
+					remove_item_from_terrain(type.item.id, task.task_pos)
+				}
+				end_task(id, task)
+			}
 	}
 }
 
@@ -135,7 +152,7 @@ end_task :: proc(id: u32, task: ^Task) {
 	ent := get_entity(id)
 
 	#partial switch type in task.type {
-		case Move, Drink:
+		case Move, Drink, Pick_Item:
 		case Social:
 			social_ent := get_entity(type.target_ent)
 
@@ -165,3 +182,7 @@ Social :: struct {
 }
 
 Drink :: struct { }
+
+Pick_Item :: struct { 
+	item: Item
+}

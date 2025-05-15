@@ -64,8 +64,16 @@ main :: proc() {
 		"Some Rock"
 	}
 
+	rocka: Item = {
+		get_item_id(),
+		&rock_item_data,
+
+		"Rocka"
+	}
+
 	place_item_in_world(a_rock, {3, 0, 3})
 	place_item_in_world(some_rock, {3, 0, 3})
+	place_item_in_world(rocka, {3, 0, 3})
 
 	create_entity({0, 0, 0}, "Tert", male)
 	create_entity({3, 0, 2}, "Afliton", male)
@@ -107,6 +115,14 @@ main :: proc() {
 
 		rl.BeginDrawing()
 			rl.ClearBackground(rl.GRAY)
+
+			//--
+			if len(terrain_world[mouse_grid_pos].items) > 0 {
+				for item in terrain_world[mouse_grid_pos].items {
+					fmt.println(item.item_data.title)
+				}
+			}
+			//--
 
 			rl.BeginMode2D(camera)
 				terrain_draw()	
@@ -219,6 +235,40 @@ entity_gui :: proc() {
 
 	rl.GuiProgressBar(water_rect, "Water:", "", &ent.water, 0, ent.max_water)
 
+	// Inventory
+	inventory_rect: rl.Rectangle = {
+		0, f32(window_height) - 200,
+		400, 200 
+	}
+
+	rl.GuiPanel(inventory_rect, "Items")
+
+	slot_rect: rl.Rectangle = {
+		inventory_rect.x, inventory_rect.y,
+		inventory_rect.width / 2, 27 
+	}
+
+	item_rect: rl.Rectangle = {
+		inventory_rect.x + slot_rect.width, slot_rect.y,
+		inventory_rect.width / 2, 27 
+	}
+
+	for slot in ent.inventory {
+		slot_rect.y += 30
+		item_rect.y += 30
+		rl.GuiLabel(slot_rect, slot.name)
+
+		switch item in slot.item_type {
+			case Item:
+				if rl.GuiButton(item_rect, item.name) {
+
+				}
+
+			case Null_Item:
+				rl.GuiLabel(item_rect, "No Item")
+		}
+	} 
+
 	// Right Click Menu
 	if rl.IsMouseButtonPressed(.RIGHT) {
 		if !in_right_click {
@@ -238,6 +288,8 @@ right_click_gui :: proc() {
 	if !in_right_click {
 		return
 	}
+
+	ent := get_entity(current_entity)
 
 	screen_pos := rl.GetWorldToScreen2D({f32(rc_world_pos.x) * tile_pixel_size , f32(rc_world_pos.z) * tile_pixel_size}, camera)
 	rl.DrawRectangleLines(i32(screen_pos.x), i32(screen_pos.y), i32(tile_pixel_size * camera.zoom), i32(tile_pixel_size * camera.zoom), rl.RED)
@@ -335,7 +387,27 @@ right_click_gui :: proc() {
 			button_rect.y += 25
 
 			if rl.GuiButton(button_rect, item.name) {
-				fmt.println("item Taken")
+				in_right_click = false
+				if check_empty_slot(&ent.inventory) {
+					// Add task
+					add_task(
+						current_entity,
+						Task {
+							get_task_id(),
+							"Pick Item",
+							false, 
+							false, 
+
+							{},
+							rc_world_pos,
+
+							Pick_Item { item }
+						}
+					)
+
+				} else {
+					fmt.println("No space on inventory")
+				}
 			}
 		}
 	}
