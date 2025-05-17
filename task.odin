@@ -31,7 +31,6 @@ add_task :: proc(id: u32, task: Task) {
 	ent := get_entity(id)
 
 	#partial switch type in task.type {
-		case Move, Drink, Pick_Item, Harvest_Plant, Eat_Full:
 		case Social:
 			if task.is_auto {
 				break
@@ -142,8 +141,8 @@ execute_task :: proc(id: u32, task: ^Task) {
 			if status != .WALK {
 				if check_empty_slot(&ent.inventory) {
 					// Add Item to Inventory and delete from world
-					place_item_in_inventory(type.item, &ent.inventory)
-					remove_item_from_terrain(type.item.id, task.task_pos)
+					place_item_in_inventory(type.item_id, &ent.inventory)
+					remove_item_from_terrain(type.item_id, task.task_pos)
 				}
 				end_task(id, task)
 			}
@@ -167,11 +166,11 @@ execute_task :: proc(id: u32, task: ^Task) {
 					plant.items_to_give -= 1
 
 					// Control if item is added to Inventory or Terrain
-					item := get_item_from_item_data(&carrot_item_data)
+					new_item_id := create_item_from_item_data(&carrot_item_data)
 					if check_empty_slot(&ent.inventory) {
-						place_item_in_inventory(item, &ent.inventory)
+						place_item_in_inventory(new_item_id, &ent.inventory)
 					} else {
-						place_item_in_world(item, ent.pos)
+						place_item_in_world(new_item_id, ent.pos)
 					}
 				}
 
@@ -182,8 +181,21 @@ execute_task :: proc(id: u32, task: ^Task) {
 			}
 
 		case Eat_Full:
-			if check_item_in_inventory(type.item) {
-				bite_item_food(item)
+			if check_item_in_inventory(type.item_id, &ent.inventory) {
+				edible := &items[type.item_id]
+
+				#partial switch &type in edible.type {
+					case Item_Food:
+						type.calories -= 10
+						ent.food += 10
+
+						if type.calories <= 0 {
+							end_task(id, task)
+						}
+				}
+
+			} else {
+				end_task(id, task)
 			}
 	}
 }
@@ -192,7 +204,6 @@ end_task :: proc(id: u32, task: ^Task) {
 	ent := get_entity(id)
 
 	#partial switch type in task.type {
-		case Move, Drink, Pick_Item, Harvest_Plant:
 		case Social:
 			social_ent := get_entity(type.target_ent)
 
@@ -224,7 +235,7 @@ Social :: struct {
 Drink :: struct { }
 
 Pick_Item :: struct { 
-	item: Item
+	item_id: u32
 }
 
 Harvest_Plant :: struct {
@@ -232,5 +243,5 @@ Harvest_Plant :: struct {
 }
 
 Eat_Full :: struct {
-	item: Item
+	item_id: u32
 }

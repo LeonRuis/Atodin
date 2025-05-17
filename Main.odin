@@ -64,12 +64,12 @@ main :: proc() {
 	create_plant(&carrot_plant_data, {15, 0, 0})
 
 	place_item_in_world(
-		get_item_from_item_data(&rock_item_data),
+		items[create_item_from_item_data(&rock_item_data)].id,
 		{3, 0, 3} 
 	)
 
 	place_item_in_world(
-		get_item_from_item_data(&carrot_item_data),
+		items[create_item_from_item_data(&carrot_item_data)].id,
 		{6, 0, 10}
 	)
 
@@ -78,7 +78,7 @@ main :: proc() {
 	create_entity({7, 0, 3}, "Ina", female)
 
 	place_item_in_inventory(
-		get_item_from_item_data(&carrot_item_data),
+		items[create_item_from_item_data(&carrot_item_data)].id,
 		&get_entity(1).inventory
 	)
 
@@ -147,7 +147,8 @@ main :: proc() {
 				}
 
 				s: string
-				for item, i in terrain_world[mouse_grid_pos].items {
+				for item_id, i in terrain_world[mouse_grid_pos].items {
+					item := &items[item_id]
 					s = strings.clone_from_cstring(item.name)
 					if i == 0 {
 						str = strings.concatenate({str, s})
@@ -215,8 +216,7 @@ in_right_click: bool = false
 rc_world_pos: vec3i
 rc_target_ent: u32
 
-in_item_options: bool = false
-item_in_options: Item
+item_in_options: u32 = null_id
 item_options_rect: rl.Rectangle
 
 in_plant_options: bool = false
@@ -296,17 +296,25 @@ entity_gui :: proc() {
 		item_rect.y += 30
 		rl.GuiLabel(slot_rect, slot.name)
 
-		switch &item in slot.item_type {
-			case Item:
+		switch item_id in slot.item_type {
+			case u32:
+				item := &items[item_id]
 				if rl.GuiButton(item_rect, item.name) {
-					if in_item_options {
-						in_item_options = false 
+					if item_in_options != null_id{
+						item_in_options = null_id
 					} else {
-						in_item_options = true
-						item_in_options = item
+						item_in_options = item_id
 						item_options_rect = item_rect
 						item_options_rect.x += 200
 					}
+				}
+
+				// Draw Calories progress bar
+				#partial switch &type in item.type {
+					case Item_Food:	
+						item_calories_rect := item_rect
+						item_calories_rect.height = 7
+						rl.GuiProgressBar(item_calories_rect, "", "", &type.calories, 0, type.max_calories)
 				}
 
 			case Null_Item:
@@ -315,7 +323,7 @@ entity_gui :: proc() {
 	} 
 
 		// Item Options
-	if in_item_options && item_in_options.id != null_id {
+	if item_in_options != null_id {
 		rl.GuiPanel(item_options_rect, "Options")
 
 		// Drop Item
@@ -326,11 +334,11 @@ entity_gui :: proc() {
 			remove_item_from_inventory(item_in_options, &ent.inventory)
 			place_item_in_world(item_in_options, ent.pos)
 
-			in_item_options = false
+			item_in_options = null_id
 		}
 
 		// Eat Item (if is food)
-		#partial switch &type in item_in_options.item_data.type {
+		#partial switch &type in items[item_in_options].type {
 			case Item_Food:
 				option_rect.y += 25
 				if rl.GuiButton(option_rect, "Eat") {
@@ -351,8 +359,9 @@ entity_gui :: proc() {
 						}
 					)
 
-					in_item_options = false
+					item_in_options = null_id
 				}
+
 		}
 	}
 
@@ -506,7 +515,8 @@ right_click_gui :: proc() {
 
 	// Pick Item From Terrain 
 	if len(terrain_world[rc_world_pos].items) > 0 {
-		for item in terrain_world[rc_world_pos].items {
+		for item_id in terrain_world[rc_world_pos].items {
+			item := &items[item_id]
 			button_rect.y += 25
 
 			if rl.GuiButton(button_rect, item.name) {
@@ -524,7 +534,7 @@ right_click_gui :: proc() {
 							{},
 							rc_world_pos,
 
-							Pick_Item { item }
+							Pick_Item { item_id }
 						}
 					)
 

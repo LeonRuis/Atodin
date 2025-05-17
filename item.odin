@@ -18,7 +18,7 @@ Item_Data :: struct {
 
 Item :: struct {
 	id: u32,
-	item_data: ^Item_Data,
+	sprite_dir: ^vec2i,
 
 	name: cstring,
 
@@ -32,6 +32,7 @@ Item :: struct {
 Item_Misc :: struct { }
 Item_Food :: struct { 
 	calories: f32,
+	max_calories: f32,
 	vitamin: cstring
 }
 
@@ -43,17 +44,19 @@ get_item_id :: proc() -> u32 {
 	return valid_item_id
 }
 
-get_item_from_item_data :: proc(item_data: ^Item_Data) -> Item {
+create_item_from_item_data :: proc(item_data: ^Item_Data) -> u32 {
+	ID := get_item_id()
 	new_item: Item = {
-		id = get_item_id(),
-		item_data = item_data,
+		id = ID,
+		sprite_dir = &item_data.sprite_dir,
 
 		name = item_data.title,
 
 		type = item_data.type
 	}
 
-	return new_item
+	items[ID] = new_item
+	return ID
 }
 
 draw_item :: proc(pos: vec3i, sprite_dir: vec2i) {
@@ -70,13 +73,13 @@ draw_item :: proc(pos: vec3i, sprite_dir: vec2i) {
 	rl.DrawTexturePro(item_atlas, source, dest, {0, 0}, 0, rl.WHITE)
 }
 
-place_item_in_world :: proc(item: Item, pos: vec3i) -> bool {
+place_item_in_world :: proc(item_id: u32, pos: vec3i) -> bool {
 	if pos not_in terrain_world {
 		return false
 	}
 
 	terrain_cell := &terrain_world[pos]
-	append(&terrain_cell.items, item)
+	append(&terrain_cell.items, item_id)
 
 	return true
 }
@@ -85,7 +88,7 @@ place_item_in_world :: proc(item: Item, pos: vec3i) -> bool {
 check_empty_slot :: proc(inventory: ^[dynamic]Slot) -> bool {
 	for slot in inventory {
 		switch item_type in slot.item_type {
-			case Item:
+			case u32:
 			case Null_Item:
 				return true
 		}	
@@ -95,12 +98,12 @@ check_empty_slot :: proc(inventory: ^[dynamic]Slot) -> bool {
 }
 
 // Return true if item is in inventory 
-check_item_in_inventory :: proc(item: Item, inventory: ^[dynamic]Slot) -> bool {
+check_item_in_inventory :: proc(item_id: u32, inventory: ^[dynamic]Slot) -> bool {
 	for slot in inventory {
 		switch item_type in slot.item_type {
 			case Null_Item:
-			case Item:
-				if item.id == item_type.id {
+			case u32:
+				if item_id == item_type {
 					return true
 				}
 		}	
@@ -109,32 +112,23 @@ check_item_in_inventory :: proc(item: Item, inventory: ^[dynamic]Slot) -> bool {
 	return false
 }
 
-bite_item_food :: proc(item: Item) -> Item {
-	#partial switch &data_type in item.type {
-		case Item_Food:
-			data_type.calories -= 10
-	}
-
-	return item
-}
-
-place_item_in_inventory :: proc(item: Item, inventory: ^[dynamic]Slot) {
+place_item_in_inventory :: proc(item_id: u32, inventory: ^[dynamic]Slot) {
 	for &slot in inventory {
 		switch item_type in slot.item_type {
-			case Item:
+			case u32:
 			case Null_Item:
-				slot.item_type = item
+				slot.item_type = item_id
 				return 
 			}	
 	}
 }
 
-remove_item_from_inventory :: proc(item: Item, inventory: ^[dynamic]Slot) {
+remove_item_from_inventory :: proc(item_id: u32, inventory: ^[dynamic]Slot) {
 	for &slot in inventory {
 		switch item_type in slot.item_type {
 			case Null_Item:
-			case Item:
-				if item_type.id == item.id {
+			case u32:
+				if item_type == item_id {
 					slot.item_type = Null_Item {}
 				}
 			}	
@@ -144,8 +138,8 @@ remove_item_from_inventory :: proc(item: Item, inventory: ^[dynamic]Slot) {
 remove_item_from_terrain :: proc(item_id: u32, pos: vec3i) {
 	terrain_cell := &terrain_world[pos]
 
-	for item, i in terrain_cell.items {
-		if item.id == item_id {
+	for item_id, i in terrain_cell.items {
+		if item_id == item_id {
 			ordered_remove(&terrain_cell.items, i)
 			return
 		}
@@ -157,7 +151,7 @@ Slot :: struct {
 	name: cstring,
 
 	item_type: union {
-		Item,
+		u32,
 		Null_Item
 	}
 }
@@ -186,5 +180,5 @@ carrot_item_data: Item_Data = {
 	sprite_dir = carrot_item,
 	description = "Basic Veggie.",
 
-	type = Item_Food { 40, "C" }
+	type = Item_Food { 50, 50, "C" }
 }

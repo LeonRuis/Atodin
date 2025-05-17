@@ -5,11 +5,19 @@
 	- Drop Item
 - Harvest Plant:
 	- Behavior: los items resultantes de harvest se intentan acomodar en el inventario y si no se puede se pone en el terreno 
+- Items por id
+- Eat Task
 
 // To - Do \\
 [Vegetation]
-- Carrot
-	- harvest
 - life cycle
+- auto eat
+- complex food need
+	- calories
+	- micro Nutrients (vitamins, hierro, fibra, etc) 
+	- macro Nutrients (Grasa, proteina, carb)
 
 - Diferentes opciones segun el Item
+
+// Ideas \\
+Ramas de medicina: lesiones, balance cuerpo, ejemplo

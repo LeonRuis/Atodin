@@ -4,7 +4,6 @@ import fmt "core:fmt"
 import rand "core:math/rand"
 import rl "vendor:raylib"
 
-entities_order: [dynamic]u32
 entities: map[u32]Entity
 null_id :: 0
 
@@ -68,7 +67,7 @@ create_entity :: proc(pos: vec3i, name: cstring, sprite: vec2i) {
 		water = f32(rand.int31_max(400)),
 		max_water = 400, 
 
-		food = f32(rand.int31_max(400)),
+		food = 10,// f32(rand.int31_max(400)),
 		max_food = 400, 
 
 		inventory = {
@@ -85,8 +84,28 @@ create_entity :: proc(pos: vec3i, name: cstring, sprite: vec2i) {
 
 	entities[ID] = entity
 
-	append(&entities_order, ID)
 	place_entity_in_world(ID, pos)
+}
+
+destroy_entity :: proc(ent_id: u32) {
+	if ent_id not_in entities {
+		return
+	}
+
+	ent := get_entity(ent_id)
+
+	if ent_id == current_entity {
+		current_entity = null_id
+	}
+
+	// // Remove tasks
+	for &task in ent.tasks {
+		end_task(ent_id, &task)
+	}
+
+	remove_entity_in_world(ent.pos)
+
+	delete_key(&entities, ent_id)
 }
 
 entities_draw :: proc() {
@@ -100,20 +119,38 @@ entities_draw :: proc() {
 }
 
 entities_update :: proc() {
-	for id in entities_order {
-		ent := get_entity(id)
-		update_entity(ent)
+	for id, &ent in entities {
+		if !update_entity(&ent) {
+			continue
+		}
 	}
 }
 
-update_entity :: proc(ent: ^Entity) {
+update_entity :: proc(ent: ^Entity) -> bool {
 	id := ent.id
+	to_die: bool = false
+
 	if ent.social > 0 {
 		ent.social -= 1 
+	} else {
+		to_die = true
 	}
 
 	if ent.water > 0 {
 		ent.water -= 1
+	} else {
+		to_die = true
+	}
+
+	if ent.food > 0 {
+		ent.food -= 1
+	} else {
+		to_die = true
+	}
+
+	if to_die {
+		destroy_entity(id)
+		return false
 	}
 
 	if len(ent.tasks) > 0 {
@@ -125,7 +162,7 @@ update_entity :: proc(ent: ^Entity) {
 		for task in ent.tasks {
 			#partial switch type in task.type {
 				case Drink:
-					return	
+					return true
 			}
 		}
 
@@ -156,7 +193,7 @@ update_entity :: proc(ent: ^Entity) {
 		for task in ent.tasks {
 			#partial switch type in task.type {
 				case Social:
-					return
+					return true
 			}
 		}
 
@@ -212,6 +249,8 @@ update_entity :: proc(ent: ^Entity) {
 			)
 		}
 	} 
+
+	return true
 }
 
 place_entity_in_world :: proc(id: u32, pos: vec3i) {

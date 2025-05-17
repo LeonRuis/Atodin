@@ -16,7 +16,7 @@ Terrain_Cell :: struct {
 	entity: u32,
 	plant: u32,
 
-	items: [dynamic]Item
+	items: [dynamic]u32
 }
 
 terrain_init :: proc() {
@@ -55,7 +55,7 @@ terrain_draw :: proc() {
 		rl.DrawRectangle(pos.x, pos.z, tile_pixel_size, tile_pixel_size, cell.color)
 
 		if len(cell.items) > 0 {
-			draw_item(key_pos, cell.items[0].item_data.sprite_dir)
+			draw_item(key_pos, items[cell.items[0]].sprite_dir^)
 		}
 
 		if cell.plant != null_id {
