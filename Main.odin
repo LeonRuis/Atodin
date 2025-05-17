@@ -27,11 +27,12 @@ item_atlas: rl.Texture2D
 
 rock  :: vec2i{0, 0}
 stick :: vec2i{1, 0}
+carrot_item :: vec2i{2, 0}
 
 	// Plants
 plant_atlas: rl.Texture2D
 
-carrot :: vec2i{0, 0}
+carrot_plant :: vec2i{0, 0}
 rose_bush :: vec2i{1, 0}
 
 main :: proc() {
@@ -60,52 +61,24 @@ main :: proc() {
 	path_init()
 
 	//##
-	a_rock: Item = {
-		get_item_id(),
-		&rock_item_data,
-
-		"A Rock"
-	}
-
-	some_rock: Item = {
-		get_item_id(),
-		&rock_item_data,
-
-		"Some Rock"
-	}
-
-	rocka: Item = {
-		get_item_id(),
-		&rock_item_data,
-
-		"Rocka"
-	}
-
-	some_stick: Item = {
-		get_item_id(),
-		&stick_item_data,
-
-		stick_item_data.title
-	}
-
 	create_plant(&carrot_plant_data, {15, 0, 0})
 
-	place_item_in_world(a_rock, {3, 0, 3})
-	place_item_in_world(some_rock, {3, 0, 3})
-	place_item_in_world(rocka, {3, 0, 3})
-	place_item_in_world(some_stick, {6, 0, 10})
+	place_item_in_world(
+		get_item_from_item_data(&rock_item_data),
+		{3, 0, 3} 
+	)
+
+	place_item_in_world(
+		get_item_from_item_data(&carrot_item_data),
+		{6, 0, 10}
+	)
 
 	create_entity({0, 0, 0}, "Tert", male)
 	create_entity({3, 0, 2}, "Afliton", male)
 	create_entity({7, 0, 3}, "Ina", female)
 
 	place_item_in_inventory(
-		Item {
-			get_item_id(),
-			&rock_item_data,
-
-			rock_item_data.title
-		},
+		get_item_from_item_data(&carrot_item_data),
 		&get_entity(1).inventory
 	)
 
@@ -169,7 +142,7 @@ main :: proc() {
 				str: string = ""
 
 				label_rect: rl.Rectangle = {
-					(f32(window_width) / 2) - 200, 0,
+					(f32(window_width) / 2) - 175, f32(window_height) - 50,
 					500, 50
 				}
 
@@ -246,6 +219,9 @@ in_item_options: bool = false
 item_in_options: Item
 item_options_rect: rl.Rectangle
 
+in_plant_options: bool = false
+plant_options_pos: vec3i
+
 entity_gui :: proc() {
 	in_gui = false
 	if current_entity == null_id {
@@ -273,21 +249,29 @@ entity_gui :: proc() {
 		}
 	}
 
-		// Social 
-	social_rect: rl.Rectangle = {
+	// Needs
+	needs_rect: rl.Rectangle = {
 		165, 0,
 		200, 50
 	}
 
+		// Social 
+	social_rect := needs_rect
+
 	rl.GuiProgressBar(social_rect, "Social:", "", &ent.social, 0, ent.max_social)
 
 		// Water
-	water_rect: rl.Rectangle = {
-		165, 50,
-		200, 50
-	}
+	water_rect := needs_rect
+	water_rect.y += 50
 
 	rl.GuiProgressBar(water_rect, "Water:", "", &ent.water, 0, ent.max_water)
+
+		// Food
+	food_rect := needs_rect
+	food_rect.x += 275
+
+	rl.GuiProgressBar(food_rect, "Food:", "", &ent.food, 0, ent.max_food)
+
 
 	// Inventory
 	inventory_rect: rl.Rectangle = {
@@ -331,7 +315,7 @@ entity_gui :: proc() {
 	} 
 
 		// Item Options
-	if in_item_options {
+	if in_item_options && item_in_options.id != null_id {
 		rl.GuiPanel(item_options_rect, "Options")
 
 		// Drop Item
@@ -339,11 +323,70 @@ entity_gui :: proc() {
 		option_rect.y += 25
 
 		if rl.GuiButton(option_rect, "Drop") {
-			// fmt.println("Drop: ", item_in_options.name)
 			remove_item_from_inventory(item_in_options, &ent.inventory)
 			place_item_in_world(item_in_options, ent.pos)
 
 			in_item_options = false
+		}
+
+		// Eat Item (if is food)
+		#partial switch &type in item_in_options.item_data.type {
+			case Item_Food:
+				option_rect.y += 25
+				if rl.GuiButton(option_rect, "Eat") {
+					add_task(
+						current_entity,
+						Task {
+							get_task_id(),
+							"Eat Item",
+							false,
+							false,
+
+							{},
+							{},
+
+							Eat_Full {
+								item_in_options
+							}
+						}
+					)
+
+					in_item_options = false
+				}
+		}
+	}
+
+	// Plant Options
+	if in_plant_options {
+		screen_pos := rl.GetWorldToScreen2D({f32(plant_options_pos.x) * tile_pixel_size , f32(plant_options_pos.z) * tile_pixel_size}, camera)
+
+
+		rect: rl.Rectangle = {
+			f32(screen_pos.x + (tile_pixel_size * camera.zoom)), f32(screen_pos.y),
+			100, 100
+		}
+		rl.GuiPanel(rect, "Plant Options")
+		button_rect = rect 
+		button_rect.height = 27
+		button_rect.y += 25
+
+		// Harvest Plant
+		if rl.GuiButton(button_rect, "Harvest") {
+			add_task(
+				current_entity,
+				Task {
+					get_task_id(),
+					"Harvest Plant",
+					false,
+					false,
+
+					{},
+					plant_options_pos,
+
+					Harvest_Plant { terrain_world[plant_options_pos].plant }
+				}	
+			)
+			in_plant_options = false
 		}
 	}
 
@@ -354,6 +397,8 @@ entity_gui :: proc() {
 
 			rc_world_pos = mouse_grid_pos
 			rc_target_ent = target_entity
+
+			in_plant_options = false
 		} else {
 			in_right_click = false 
 		}
@@ -487,6 +532,18 @@ right_click_gui :: proc() {
 					fmt.println("No space on inventory")
 				}
 			}
+		}
+	}
+
+	// Plant Options
+	if terrain_world[rc_world_pos].plant != null_id {
+		button_rect.y += 25
+
+		plant_id := terrain_world[rc_world_pos].plant
+		if rl.GuiButton(button_rect, plants[plant_id].plant_data.title) {
+			in_right_click = false
+			in_plant_options = true
+			plant_options_pos = rc_world_pos
 		}
 	}
 }

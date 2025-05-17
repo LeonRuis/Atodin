@@ -25,6 +25,9 @@ Entity :: struct {
 	water: f32,
 	max_water: f32,
 
+	food: f32,
+	max_food: f32,
+
 	inventory: [dynamic]Slot
 }
 
@@ -64,6 +67,9 @@ create_entity :: proc(pos: vec3i, name: cstring, sprite: vec2i) {
 
 		water = f32(rand.int31_max(400)),
 		max_water = 400, 
+
+		food = f32(rand.int31_max(400)),
+		max_food = 400, 
 
 		inventory = {
 			Slot {

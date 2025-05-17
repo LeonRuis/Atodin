@@ -84,6 +84,10 @@ path_init :: proc() {
 }
 
 path :: proc(source, target: vec3i, adyacent: bool) -> [dynamic]vec3i {
+	if target == source {
+		return {}
+	}
+	
 	open_list  : map[vec3i]Path_Node
 	closed_list: map[vec3i]Path_Node
 

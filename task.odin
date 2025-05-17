@@ -15,7 +15,9 @@ Task :: struct {
 		Move,
 		Social,
 		Drink,
-		Pick_Item
+		Pick_Item,
+		Harvest_Plant,
+		Eat_Full
 	}
 }
 
@@ -29,7 +31,7 @@ add_task :: proc(id: u32, task: Task) {
 	ent := get_entity(id)
 
 	#partial switch type in task.type {
-		case Move, Drink, Pick_Item:
+		case Move, Drink, Pick_Item, Harvest_Plant, Eat_Full:
 		case Social:
 			if task.is_auto {
 				break
@@ -70,7 +72,7 @@ init_task :: proc(id: u32, task: ^Task) {
 			task.task_pos = get_entity(type.target_ent).pos
 			task.path = get_path(ent.pos, task.task_pos, true)
 
-		case Drink, Pick_Item: 
+		case Drink, Pick_Item, Harvest_Plant: 
 			task.path = get_path(ent.pos, task.task_pos, true)
 	}
 }
@@ -145,6 +147,44 @@ execute_task :: proc(id: u32, task: ^Task) {
 				}
 				end_task(id, task)
 			}
+
+		case Harvest_Plant:
+			if !task.is_init {
+				init_task(id, task)
+			}
+
+			status := walk_entity_path(id, task)
+
+			if status != .WALK {
+				if type.plant_id not_in plants {
+					end_task(id, task)
+					return
+				}
+
+				plant := &plants[type.plant_id]
+
+				if plant.items_to_give > 0 {
+					plant.items_to_give -= 1
+
+					// Control if item is added to Inventory or Terrain
+					item := get_item_from_item_data(&carrot_item_data)
+					if check_empty_slot(&ent.inventory) {
+						place_item_in_inventory(item, &ent.inventory)
+					} else {
+						place_item_in_world(item, ent.pos)
+					}
+				}
+
+				if plant.items_to_give <= 0 {
+					remove_plant(type.plant_id)
+					end_task(id, task)
+				}
+			}
+
+		case Eat_Full:
+			if check_item_in_inventory(type.item) {
+				bite_item_food(item)
+			}
 	}
 }
 
@@ -152,7 +192,7 @@ end_task :: proc(id: u32, task: ^Task) {
 	ent := get_entity(id)
 
 	#partial switch type in task.type {
-		case Move, Drink, Pick_Item:
+		case Move, Drink, Pick_Item, Harvest_Plant:
 		case Social:
 			social_ent := get_entity(type.target_ent)
 
@@ -184,5 +224,13 @@ Social :: struct {
 Drink :: struct { }
 
 Pick_Item :: struct { 
+	item: Item
+}
+
+Harvest_Plant :: struct {
+	plant_id: u32,
+}
+
+Eat_Full :: struct {
 	item: Item
 }

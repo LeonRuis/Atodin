@@ -3,6 +3,8 @@
 - Plants foundations
 - Varios Inventory interaction, como:
 	- Drop Item
+- Harvest Plant:
+	- Behavior: los items resultantes de harvest se intentan acomodar en el inventario y si no se puede se pone en el terreno 
 
 // To - Do \\
 [Vegetation]
